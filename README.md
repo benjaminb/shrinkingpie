@@ -39,3 +39,5 @@ Game Parameters:
 Variations:
 -Add a cost per round (a maintenance expense). Players start with a bank of points from which some amount is subtracted each round. If a player reaches 0, they are eliminated from the tournament.
 -Some other kind of replicator mechanism?
+
+test
