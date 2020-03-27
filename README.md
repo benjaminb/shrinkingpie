@@ -1,5 +1,5 @@
 # The Iterated Shrinking Pie Tournament Ruleset
-#### version 0.0
+#### version 0:0:0.01
 
 ## Abstract
 
@@ -15,7 +15,8 @@ Players are randomly matched in pairs. Each match will be called a “meet”. I
 
 
 ### Actions
-In round 1, one player in each pair is randomly chosen to offer first. This will be Player A, who will offer to Player B a split of the pie. Specifically, Player A's actions are to offer any value between 0 and 1 inclusive according to the proportion they wish to split: $O \in [0, 1]$.
+In round 1, one player in each pair is randomly chosen to offer first. This will be Player A, who will offer to Player B a split of the pie. Specifically, Player A's actions are to offer any value between 0 and 1 inclusive according to the proportion they wish to split:
+![O \in \[0, 1\]](https://render.githubusercontent.com/render/math?math=O%20%5Cin%20%5B0%2C%201%5D)
 
 Player B then has 3 available actions:
 1. Accept ("A")
