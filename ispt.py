@@ -1,5 +1,8 @@
 # ITERATED SHRINKING PIE TOURNAMENT
 
+# from api import ISPT
+from api import *
+
 # Game Parameters
 # dictionary for various game Parameters
 parameters = {
@@ -10,17 +13,16 @@ parameters = {
 
 """Functions"""
 
-# pair up players in meets
-def pair():
-    raise NotImplementedError
-
 
 # at the end of each round, put the history into the history object
 
 # run the game
 def main():
     # instantiate objects
-        agents = []
+    agent1 = Agent(split=0.4)
+
+    agents = []
+    game = ISPT(players=agents)
         # Get agents. For files in agents directory:
             # read in file and execute
             # for file in files:
@@ -36,4 +38,7 @@ def main():
     # process actions
     # record results in history
     # iterate
-    raise NotImplementedError
+    print("END OF PROGRAM")
+
+if __name__ == "__main__":
+    main()
