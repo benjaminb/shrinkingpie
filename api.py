@@ -1,13 +1,14 @@
 import random
+from inspect import signature
 
 # Classes needed
 
 # singleton class for the history object
     # include a component for current game state/scores
     # current round
-actions = ['accept', 'counter', 'reject']
 history = {
-            'results': []
+            'results': [],
+            'testdata': 'test value'
 }
 
 
@@ -36,6 +37,9 @@ class Agent():
     def __init__(self, split=0.0, name=None):
         self.split = split
         self.name = name
+
+        # CONSIDER: should actions be an enum?
+        self.actions = ['accept', 'counter', 'reject']
         # TODO make a helper function to ensure unique name strings
         # memory location of agent can serve as ID?
     # Needs to determine how to make an offer
@@ -63,9 +67,11 @@ class Agent():
     def response(self, offer, pie):
         global history
         global actions
+        print("Agent's response as been called.")
+        print('history object accessed:', history['testdata'])
 
         # start off by always accepting
-        return actions[0]
+        return self.actions[0]
         # Given an offer and the history, how would I respond?
 
 
@@ -82,9 +88,14 @@ class Table(): # aka table
         if len(players) != 2:
             print("Table() didn't receive two players!")
             raise ValueError
-        if not all(isinstance(player, Agent) for player in players):
-            print("A player was passed in that wasn't an instance of Agent()")
-            raise ValueError
+        # Check that appropriate methods exist
+        # for player in players:
+
+
+        #
+        # if not all(isinstance(player, Agent) for player in players):
+        #     print("A player was passed in that wasn't an instance of Agent()")
+        #     raise ValueError
 
         # Set the offerer and responder or randomize if we don't have one
         self.offerer = players.index(offerer) if offerer else random.choice(players)
@@ -134,3 +145,29 @@ class Table(): # aka table
         # Return the results...to what?
         # What should the return object be?
         return
+
+def validate_agent(player):
+    '''An agent must have the methods .offer and .response,
+       and they must have the same signature as that of Agent class'''
+
+    # Constants
+    OFFER_SIG = ['pie']
+    RESPONSE_SIG = ['offer', 'pie']
+
+    # Check player has correct methods
+    if not all([hasattr(player, 'offer'), hasattr(player, 'response')]):
+        print("player missing .offer or .response method")
+        return False
+
+    # Check methods have correct signature
+    offer_sig = [p for p in signature(player.offer).parameters]
+    if offer_sig != OFFER_SIG:
+        print("player doesn't have correct signature for player.offer")
+        return False
+
+    response_sig = [p for p in signature(player.response).parameters]
+    if response_sig != RESPONSE_SIG:
+        print("player doesn't have correct signature for player.response")
+        return False
+
+    return True
