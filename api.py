@@ -7,21 +7,72 @@ from inspect import signature
     # include a component for current game state/scores
     # current round
 history = {
-            'results': [],
+            'round': [[]], # Each element is a list of records for the round
             'testdata': 'test value'
+
 }
 
 
 class ISPT():
     """Structre of the game"""
 
-    def __init__(self, players=None, initial_score=0, min_rounds=100,
-                max_rounds=1000):
+    def __init__(self, players=None, initial_score=0):
         self.history = []
+        self.state = {'round': 1} # Will contain current game state for convenience
         self.players = players
         self.score = {player: initial_score for player in players}
-        self.min_rounds = min_rounds
-        self.max_rounds = max_rounds
+
+        self.odd_player = None
+
+    # A method that tells the instance to play the game
+    def play(self, max_rounds=1000):
+        if not self.players:
+            print("No players added to the game!")
+            return
+
+        # Create the first round of tables by randomly pair player indices
+
+        pairs = self.init_tables()
+        print("Pairings:", pairs)
+
+        while self.state['round'] < max_rounds:
+
+            # Process the tables
+                # updates the history
+
+            # Set up next round's tables
+
+            # Update the current game state
+
+            self.state['round'] += 1
+
+        return
+
+    def init_tables(self):
+        pairs = []
+        num_players = len(self.players)
+        indices = {i for i in range(num_players)}
+
+        # If we have an odd number of players
+        if num_players % 2:
+            # Create a second table with a randomly chosen player
+            pair = random.sample(indices, 2)
+            self.odd_player = pair[1]
+            print("Odd player chosen for 2nd table in round 1:", pair[1])
+            indices -= {pair[0]}
+            pairs.append(pair)
+
+        # Now we're guaranteed to have an even number of players
+        while indices:
+            pair = random.sample(indices, 2)
+            indices -= set(pair)
+            pairs.append(pair)
+
+        return pairs
+
+
+
+
 
 # Class for agent
 class Agent():
@@ -54,6 +105,7 @@ class Agent():
             this needs to return a proportion
         '''
         global history
+        global game
         split = self.split
         # logic for split
         # if pie > x then split == 0.4
@@ -66,6 +118,7 @@ class Agent():
     # Needs to determine a response
     def response(self, offer, pie):
         global history
+        global game
         global actions
         print("Agent's response as been called.")
         print('history object accessed:', history['testdata'])
@@ -88,14 +141,6 @@ class Table(): # aka table
         if len(players) != 2:
             print("Table() didn't receive two players!")
             raise ValueError
-        # Check that appropriate methods exist
-        # for player in players:
-
-
-        #
-        # if not all(isinstance(player, Agent) for player in players):
-        #     print("A player was passed in that wasn't an instance of Agent()")
-        #     raise ValueError
 
         # Set the offerer and responder or randomize if we don't have one
         self.offerer = players.index(offerer) if offerer else random.choice(players)
@@ -105,19 +150,28 @@ class Table(): # aka table
 
 
     def create_record(self, offer, response):
+        # Try to write something into history
+        global history
+        global game
+        record = {'offerer': self.offerer, 'responder': self.responder,
+                    'offer': offer, 'response': response}
+        print("writing to game information")
+        game.information[-1].append(record)
+        print(game.information)
+
         return {'offerer': self.offerer, 'responder': self.responder,
                     'offer': offer, 'response': response}
 
     def process(self):
         global history
-        # Get offer from player A
-        self.offer = self.offerer.offer(self.pie)
 
-        # Get response from player B
+        # Get actions from players
+        self.offer = self.offerer.offer(self.pie)
         self.response = self.responder.response(self.offer, self.pie)
 
-
         # Write the actions to the history object
+        record = self.create_record(self.offer, self.response)
+        history['round'][-1].append(record)
 
         # CASE: response is accept
         if self.response == "accept":
@@ -125,9 +179,7 @@ class Table(): # aka table
             print("offer accepted!")
             print("offerer gets:", 1 - self.offer)
             print()
-            # Create the record for history
-            record = self.create_record(self.offer, self.response)
-            history['results'].append(record)
+
             return
 
         # CASE: response is to counteroffer
@@ -146,7 +198,7 @@ class Table(): # aka table
         # What should the return object be?
         return
 
-def validate_agent(player):
+def valid_agent(player):
     '''An agent must have the methods .offer and .response,
        and they must have the same signature as that of Agent class'''
 

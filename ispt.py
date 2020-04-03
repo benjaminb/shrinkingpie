@@ -18,10 +18,20 @@ parameters = {
 
 # run the game
 def main():
-    # instantiate objects
+    # Instantiate agents
     agent1 = Agent(split=0.4)
+    agent2 = Agent(split=0.2)
+    agents = [agent1, agent2]
+    
+    # Validate players
+    players = []
+    for i, agent in enumerate(agents):
+        if not valid_agent(agent):
+            print("Agent", i, "not valid and removed from tournament")
+            continue
+        players.append(agent)
 
-    agents = []
+
     game = ISPT(players=agents)
         # Get agents. For files in agents directory:
             # read in file and execute
