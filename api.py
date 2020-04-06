@@ -14,7 +14,7 @@ history = {
 
 
 class ISPT():
-    """Structre of the game"""
+    """Structure of the game"""
 
     def __init__(self, players=None, initial_score=0):
         self.history = []
@@ -31,14 +31,25 @@ class ISPT():
             return
 
         # Create the first round of tables by randomly pair player indices
-
         pairs = self.init_tables()
         print("Pairings:", pairs)
+
+        # Create tables based on Pairings
+        tables = []
+        for pair in pairs:
+            # Pairs were created randomly so picking 1st position player
+            # to go first is still randomly picking
+            tables.append(Table(players = [self.players[i] for i in pair]))
 
         while self.state['round'] < max_rounds:
 
             # Process the tables
-                # updates the history
+            results = []
+            for table in tables:
+                results.append(table.process(self.state, self.history))
+
+            # updates the history
+            self.history.append(results)
 
             # Set up next round's tables
 
@@ -95,7 +106,7 @@ class Agent():
         # memory location of agent can serve as ID?
     # Needs to determine how to make an offer
     # TODO add history
-    def offer(self, pie):
+    def offer(self, state, history, pie):
         '''What offer to make
             depending on current state of the Game
             or anything from the past, in the history object
@@ -104,8 +115,7 @@ class Agent():
 
             this needs to return a proportion
         '''
-        global history
-        global game
+
         split = self.split
         # logic for split
         # if pie > x then split == 0.4
@@ -116,10 +126,7 @@ class Agent():
         return split
 
     # Needs to determine a response
-    def response(self, offer, pie):
-        global history
-        global game
-        global actions
+    def response(self, offer, state, history, pie):
         print("Agent's response as been called.")
         print('history object accessed:', history['testdata'])
 
@@ -134,8 +141,11 @@ class Table(): # aka table
 
     def __init__(self, players, offerer=None, pie=1):
         """Takes two players and runs a round
-           If no offerer is specified, choose one randomly"""
-        """Offerer should be the index of the player whose offers"""
+           If no offerer is specified, choose one randomly
+
+           players = [player A, player B]
+           offerer = index of players which is the player
+        """
 
         # Validate input
         if len(players) != 2:
@@ -143,35 +153,23 @@ class Table(): # aka table
             raise ValueError
 
         # Set the offerer and responder or randomize if we don't have one
-        self.offerer = players.index(offerer) if offerer else random.choice(players)
+        self.offerer = players[offerer] if offerer else random.choice(players)
         self.responder = players[(players.index(self.offerer) + 1) % 2]
-
         self.pie = pie
 
-
     def create_record(self, offer, response):
-        # Try to write something into history
-        global history
-        global game
-        record = {'offerer': self.offerer, 'responder': self.responder,
-                    'offer': offer, 'response': response}
-        print("writing to game information")
-        game.information[-1].append(record)
-        print(game.information)
 
         return {'offerer': self.offerer, 'responder': self.responder,
                     'offer': offer, 'response': response}
 
-    def process(self):
-        global history
+    def process(self, state, history):
 
         # Get actions from players
-        self.offer = self.offerer.offer(self.pie)
-        self.response = self.responder.response(self.offer, self.pie)
+        self.offer = self.offerer.offer(state, history, self.pie)
+        self.response = self.responder.response(self.offer, state, history, self.pie)
 
         # Write the actions to the history object
         record = self.create_record(self.offer, self.response)
-        history['round'][-1].append(record)
 
         # CASE: response is accept
         if self.response == "accept":
@@ -180,7 +178,7 @@ class Table(): # aka table
             print("offerer gets:", 1 - self.offer)
             print()
 
-            return
+            return record
 
         # CASE: response is to counteroffer
 
@@ -189,14 +187,14 @@ class Table(): # aka table
             print("offer countered!")
 
             # Instantiate the Table for next round
-            return
+            return record
 
         # CASE: response is to reject
         print("offer rejected!")
 
         # Return the results...to what?
         # What should the return object be?
-        return
+        return record
 
 def valid_agent(player):
     '''An agent must have the methods .offer and .response,
