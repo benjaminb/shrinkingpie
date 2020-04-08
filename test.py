@@ -6,8 +6,9 @@ x = Agent(0.4)
 y = Agent(0.3)
 aa = AlwaysAccepts()
 aap = AcceptsAnyPositive()
-game = ISPT(players=[x, y, aa, aap])
-game.play()
+ar = AlwaysRejects()
+game = ISPT(players=[x, ar, aa, aap])
+game.play(max_rounds=3)
 #
 # t = Table(players=[x, y], offerer=0)
 #
