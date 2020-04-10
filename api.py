@@ -14,6 +14,7 @@ class ISPT():
 
         """
         self.players = players
+        self.player_index = {player: i for i, player in enumerate(players)}
 
         # Create a dictionary mapping of player object to their index in self.players?
         self.history = []
@@ -22,7 +23,7 @@ class ISPT():
                                         # Will match the index of players in self.players
                         'table_count': [0 for player in players]
                      } # Will contain current game state for convenience
-        self.score = {idx: initial_score for idx in range(len(players))}
+        self.score = {idx: initial_score for idx in range(self.state['num_players'])}
 
         self.odd_player = None
 
@@ -33,73 +34,57 @@ class ISPT():
             return
 
         # Create the first round of tables by randomly pair player indices
-        tables = [Table(players = [self.players[i] for i in pair])
-                    for pair in self.init_tables()]
 
-        print("Initial pairings:", tables)
+        tables = [Table(players=pair, game=self) for pair in self.init_tables()]
 
-        untabled_players = []
-        while self.state['round'] < max_rounds:
+        while self.state['round'] <= max_rounds:
 
-            # Get untabled players, assign them to new tables
-            # Except they cannot be assigned to players they were previously
-            # tabled with
-            # Process the tables
             results = []
             new_tables = []
 
-            # pop tables and while table?
-            for table in tables:
+            while tables:
+                # Each table must be processed, its result stored in history
+                table = tables.pop()
                 result = table.process(self.state, self.history)
-
-                # If responder rejected, they leave the table
-                if result['response'] == 'reject':
-                    print("REJECTED!!!")
-                    # Get the index of the players
-                    players = (self.players.index(table.offerer),
-                                self.players.index(table.responder))
-
-                    self.decrease_table_count(players)
-
-                    # Hangle any untabled players
-                    untabled_players = [p for p in players
-                                        if not self.state['table_count'][p]]
-
-                    for player in untabled_players:
-                        indices = [i for i in range(self.state['num_players'])
-                                    if i not in players]
-                        new_pair = [player, random.choice(indices)]
-                        self.increase_table_count(new_pair)
-                        # TODO have instantiation of Table increment the table count
-                        new_tables.append(Table(players=new_pair))
-
-                    # If so, create new table excepting each other
-                        # sample from all indices except self and other player
-                        # create new table
-
-                if result['response'] == 'counter':
-
-                    players = (self.players.index(table.offerer),
-                                self.players.index(table.responder))
-
-                    tables.append(Table(players=players, offerer=table.responder))
-
-
                 results.append(result)
+                offerer = table.offerer_index
+                responder = table.responder_index
 
-            print("Untabled players:", untabled_players)
+                # Offer was rejected:
+                if result['response'] == 'reject':
+                    # See if either player is now untabled
+                    players = [offerer, responder]
+                    self.decrease_table_count(players)
+                    for player in players:
+                        if not self.state['table_count'][player]:
+                            indices = [i for i in range(self.state['num_players']) if i not in players]
+                            new_pair = [player, random.choice(indices)]
+                            self.increase_table_count(new_pair)
+                            new_tables.append(Table(players=new_pair, game=self))
+
+                # Offer accepted or countered:
+                else:
+                    # Create a table with roles switched
+                    new_tables.append(table.switch())
+
+                    if result['response'] == 'accept':
+                        # TODO add points
+                        pass
+
+            # End while tables -- wrap up the round
+            new_tables.reverse()
+            tables = new_tables
+
             # updates the history
             self.history.append(results)
 
-            # Set up next round's tables
-
             # Update the current game state
-
             self.state['round'] += 1
 
+        # End tournament
         print("History of the game:")
         for i, round in enumerate(self.history):
-            print("Round:", i)
+            print("Round:", i + 1)
             pp.pprint(round)
 
         # TODO: save output to csv
@@ -135,7 +120,6 @@ class ISPT():
         return
 
     def decrease_table_count(self, indices):
-        ''' Pass change = -1 fo decrease '''
         for i in indices:
             self.state['table_count'][i] -= 1
         return
@@ -190,15 +174,15 @@ class Agent():
         # Given an offer and the history, how would I respond?
 
 
-# Class for tables
-class Table(): # aka table
+class Table():
     """Determines structure for a round of actions"""
 
-    def __init__(self, players, offerer=None, pie=1):
+    def __init__(self, players, game, offerer=None, pie=1):
         """Takes two players and runs a round
            If no offerer is specified, choose one randomly
 
-           players = [player A, player B]
+           players is list of indices of players in game.players
+
            offerer = index of players which is the player
         """
 
@@ -207,47 +191,47 @@ class Table(): # aka table
             print("Table() didn't receive two players!")
             raise ValueError
 
+        self.game = game
+        # Get the class instances for the two players
+        if offerer is not None:
+            # Player class instances
+            self.offerer = game.players[offerer]
+            self.responder = game.players[players[0]] if game.players[players[0]] != self.offerer else game.players[players[1]]
+
+            # Player indices
+            self.offerer_index = offerer
+            self.responder_index = players[0] if players[0] != offerer else players[1]
+        else:
+            indices = [0, 1]; random.shuffle(indices)
+            self.offerer = game.players[indices[0]]
+            self.responder = game.players[indices[1]]
+            self.offerer_index = players[indices[0]]
+            self.responder_index = players[indices[1]]
+
         # Set the offerer and responder or randomize if we don't have one
-        self.offerer = players[offerer] if offerer else random.choice(players)
-        self.responder = players[(players.index(self.offerer) + 1) % 2]
         self.pie = pie
 
-        # Update table count in game state
-
+        # TODO Update table count in game state
+        # TODO Take in the indices of the players as well
 
 
     def create_record(self, offer, response):
 
-        return {'offerer': self.offerer, 'responder': self.responder,
+        return {'offerer': self.offerer_index, 'responder': self.responder_index,
                     'offer': offer, 'response': response}
 
     def process(self, state, history):
 
-        # Get actions from players
-        self.offer = self.offerer.offer(state, history, self.pie)
-        self.response = self.responder.response(self.offer, state, history, self.pie)
-
-        # Write the actions to the history object
-        record = self.create_record(self.offer, self.response)
-
-        # CASE: response is accept
-        if self.response == "accept":
-
-
-            return record
-
-        # CASE: response is to counteroffer
-
-        if self.response == "counter":
-            # Decrease the pie by the disount parameter
-            # Instantiate the Table for next round with offering player determined
-            return record
-
-        # CASE: response is to reject
-
-        # Return the results...to what?
-        # What should the return object be?
+        # Get actions and create record
+        offer = self.offerer.offer(state, history, self.pie)
+        response = self.responder.response(offer, state, history, self.pie)
+        record = self.create_record(offer, response)
         return record
+
+    def switch(self):
+        return Table(players=[self.offerer_index, self.responder_index],
+                    game=self.game, offerer=self.responder_index, pie=self.pie)
+
 
 def valid_agent(player):
     '''An agent must have the methods .offer and .response,

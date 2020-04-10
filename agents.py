@@ -31,3 +31,17 @@ class AlwaysRejects():
 
     def response(self, offer, state, history, pie):
         return 'reject'
+
+def AlwaysCounterPrevious():
+    def __init__(self):
+        pass
+
+    def offer(self, state, history, pie, opponent):
+        # look up other player in history previous round
+        # for round in history:
+
+        # If the other player has never made an offer:
+        return 0.5
+
+    def response(self, offer, state, history, pie):
+        return 'counter'

@@ -23,7 +23,7 @@ Player B then has 3 available actions:
 2. Counteroffer ("C")
 3. Reject ("R")
 
--If Playber B accepts: both players split the value of the pie as proposed by Player A. The points get added to each players’ scores. On subsequent rounds, the previous meet is repeated with Player B now making an offer to Player A. Player B chooses an action $O \in [0, 1]$ and Player A responds with an action in $\{A, C, R\}$
+-If Player B accepts: both players split the value of the pie as proposed by Player A. The points get added to each players’ scores. On subsequent rounds, the previous meet is repeated with Player B now making an offer to Player A. Player B chooses an action $O \in [0, 1]$ and Player A responds with an action in $\{A, C, R\}$
 
 -If Player B counteroffers: the pie shrinks by the discount parameter and the game advances to the next round. Player A may now choose A, C, or R. If they accept, the pie is split by Player B's proposed proportion and the points added to each player's score.
 
