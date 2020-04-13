@@ -11,7 +11,7 @@ In the shrinking pie game, players negotiate how to split a fixed number of poin
 ### Initial setup
 
 
-Players are randomly matched in pairs. Each match will be called a “meet”. If there are an odd number of players, then one player is randomly matched with another player who has 'already' been paired. I.e., the randomly picked player will be set to meet with two different players in the same round.
+The ISPT is defined for 3 or more players. Players are randomly matched in pairs. Each match will be called a “meet”. If there are an odd number of players, then one player is randomly matched with another player who has 'already' been paired. I.e., the randomly picked player will be set to meet with two different players in the same round.
 
 
 ### Actions

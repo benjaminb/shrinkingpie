@@ -7,34 +7,58 @@ import pprint as pp
 class ISPT():
     """Structure of the game"""
 
-    def __init__(self, players, initial_score=0):
+    def __init__(self, players, discounts=None, default_discount=0.9, initial_score=0):
         """
         Attempting to refer to players by index rather than memory location unless
         player's methods are needed
 
         """
+
+        # Validate input
+        num_players = len(players)
+        if num_players < 3:
+            errmsg = "ISPT is defined for 3 or more players only"
+            raise ValueError(errmsg)
+
+        if discounts and len(discounts) != num_players:
+            errmsg = "Length of discount list passed in does not equal number of players"
+            raise ValueError(errmsg)
+
+
         self.players = players
+
+        # Maps player class instance to their index in self.players
         self.player_index = {player: i for i, player in enumerate(players)}
 
-        # Create a dictionary mapping of player object to their index in self.players?
+        # Initialize game information
         self.history = []
-        self.state = {  'num_players': len(players),
+        self.state = {  'current_discount': [1] * num_players,
+                        'discounts': discounts if discounts is not None else [default_discount] * num_players,
+                        'num_players': num_players,
+                        'odd_player': None,
                         'round': 1,
-                                        # Will match the index of players in self.players
-                        'table_count': [0 for player in players]
+                        'scores': [initial_score] * num_players,
+                        'table_count': [0] * num_players
                      } # Will contain current game state for convenience
-        self.score = {idx: initial_score for idx in range(self.state['num_players'])}
 
         self.odd_player = None
 
-    # A method that tells the instance to play the game
+    def award_points(self, players, offer):
+        """ Players = [offerer_index, responder_index]
+        """
+        splits = (1 - offer, offer)
+        for split, player in zip(splits, players):
+            points = split * self.state['current_discount'][player]
+            self.state['scores'][player] += points
+
+            # Reset discount factor
+            self.state['current_discount'][player] = 1
+        return
+
+    # Plays the tournament
     def play(self, max_rounds=1000):
-        if not self.players:
-            print("No players added to the game!")
-            return
 
         # Create the first round of tables by randomly pair player indices
-
         tables = [Table(players=pair, game=self) for pair in self.init_tables()]
 
         while self.state['round'] <= max_rounds:
@@ -43,17 +67,19 @@ class ISPT():
             new_tables = []
 
             while tables:
-                # Each table must be processed, its result stored in history
+                # Play each table & record the results in history
                 table = tables.pop()
                 result = table.process(self.state, self.history)
                 results.append(result)
+
+                # Determine scoring and next round tabling for players based on response
                 offerer = table.offerer_index
                 responder = table.responder_index
+                players = [offerer, responder]
 
                 # Offer was rejected:
                 if result['response'] == 'reject':
                     # See if either player is now untabled
-                    players = [offerer, responder]
                     self.decrease_table_count(players)
                     for player in players:
                         if not self.state['table_count'][player]:
@@ -62,30 +88,35 @@ class ISPT():
                             self.increase_table_count(new_pair)
                             new_tables.append(Table(players=new_pair, game=self))
 
+                        # Apply discount factor
+                        self.state['current_discount'][player] *= self.state['discounts'][player]
+
+
                 # Offer accepted or countered:
                 else:
                     # Create a table with roles switched
                     new_tables.append(table.switch())
 
                     if result['response'] == 'accept':
-                        # TODO add points
-                        pass
+                        self.award_points(players, result['offer'])
+                        # Allocate points
+
+                    else:
+                        # Apply discount factor
+                        for player in players:
+                            self.state['current_discount'][player] *= self.state['discounts'][player]
 
             # End while tables -- wrap up the round
             new_tables.reverse()
             tables = new_tables
 
-            # updates the history
+            print("RESULTS:")
+            pp.pprint(results)
+            print("SCORES:", self.state['scores'])
+            print("CURRENT DISCOUNTS:", self.state['current_discount'])
+            # Update game information
             self.history.append(results)
-
-            # Update the current game state
             self.state['round'] += 1
-
-        # End tournament
-        print("History of the game:")
-        for i, round in enumerate(self.history):
-            print("Round:", i + 1)
-            pp.pprint(round)
 
         # TODO: save output to csv
         return
@@ -98,7 +129,7 @@ class ISPT():
         if self.state['num_players'] % 2:
             # Create a second table with a randomly chosen player
             pair = random.sample(indices, 2)
-            self.odd_player = pair[1]
+            self.state['odd_player'] = pair[1]
             print("Odd player chosen for 2nd table in round 1:", pair[1])
             indices -= {pair[0]}
             pairs.append(pair)

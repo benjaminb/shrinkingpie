@@ -7,8 +7,10 @@ y = Agent(0.3)
 aa = AlwaysAccepts()
 aap = AcceptsAnyPositive()
 ar = AlwaysRejects()
-game = ISPT(players=[ar, ar, ar])
-game.play(max_rounds=10)
+h = Hardballer()
+game = ISPT(players=[aa, aa, ar, h, h])
+game.play(max_rounds=20)
+print("Discounts:", game.state['discounts'])
 #
 # t = Table(players=[x, y], offerer=0)
 #
