@@ -59,7 +59,7 @@ class ISPT():
     def play(self, max_rounds=1000):
 
         # Create the first round of tables by randomly pair player indices
-        tables = [Table(players=pair, game=self) for pair in self.init_tables()]
+        tables = self.init_tables()
 
         while self.state['round'] <= max_rounds:
 
@@ -79,12 +79,13 @@ class ISPT():
 
                 # Offer was rejected:
                 if result['response'] == 'reject':
-                    # See if either player is now untabled
                     self.decrease_table_count(players)
+
+                    # Re-match any untabled players
                     for player in players:
                         if not self.state['table_count'][player]:
-                            indices = [i for i in range(self.state['num_players']) if i not in players]
-                            new_pair = [player, random.choice(indices)]
+                            new_opponent = random.choice([i for i in range(self.state['num_players']) if i not in players])
+                            new_pair = [player, new_opponent]
                             self.increase_table_count(new_pair)
                             new_tables.append(Table(players=new_pair, game=self))
 
@@ -100,7 +101,6 @@ class ISPT():
                     if result['response'] == 'accept':
                         self.award_points(players, result['offer'])
                         # Allocate points
-
                     else:
                         # Apply discount factor
                         for player in players:
@@ -114,11 +114,11 @@ class ISPT():
             pp.pprint(results)
             print("SCORES:", self.state['scores'])
             print("CURRENT DISCOUNTS:", self.state['current_discount'])
+
             # Update game information
             self.history.append(results)
             self.state['round'] += 1
 
-        # TODO: save output to csv
         return
 
     def init_tables(self):
@@ -143,7 +143,7 @@ class ISPT():
         for pair in pairs:
             self.increase_table_count(pair)
 
-        return pairs
+        return [Table(players=pair, game=self) for pair in pairs]
 
     def increase_table_count(self, indices):
         for i in indices:
@@ -154,6 +154,14 @@ class ISPT():
         for i in indices:
             self.state['table_count'][i] -= 1
         return
+
+    # TODO
+    def export_data(self):
+        """export a CSV file for each player where rows are rounds and columns are
+        tables? Also a master sheet for overall scores, avg score per round?"""
+
+        """Create an animated graph of tables & offers?"""
+        raise NotImplementedError
 
 
 # Class for agent
@@ -208,46 +216,32 @@ class Agent():
 class Table():
     """Determines structure for a round of actions"""
 
-    def __init__(self, players, game, offerer=None, pie=1):
+    def __init__(self, players, game, offerer=False, pie=1):
         """Takes two players and runs a round
-           If no offerer is specified, choose one randomly
+           If offerer = True, player[0] is offerer
+           If offerer = False, shuffle the players and 0th player is offerer
 
            players is list of indices of players in game.players
 
            offerer = index of players which is the player
         """
 
-        # Validate input
-        if len(players) != 2:
-            print("Table() didn't receive two players!")
-            raise ValueError
+        # Get the offerer and responder
+        if not offerer:
+            random.shuffle(players)
 
+        # Set agent class instances and indices
+        self.offerer_index = players[0];
+        self.offerer = game.players[players[0]]
+        self.responder_index = players[1]
+        self.responder = game.players[players[1]]
         self.game = game
-        # Get the class instances for the two players
-        if offerer is not None:
-            # Player class instances
-            self.offerer = game.players[offerer]
-            self.responder = game.players[players[0]] if game.players[players[0]] != self.offerer else game.players[players[1]]
-
-            # Player indices
-            self.offerer_index = offerer
-            self.responder_index = players[0] if players[0] != offerer else players[1]
-        else:
-            indices = [0, 1]; random.shuffle(indices)
-            self.offerer = game.players[indices[0]]
-            self.responder = game.players[indices[1]]
-            self.offerer_index = players[indices[0]]
-            self.responder_index = players[indices[1]]
-
-        # Set the offerer and responder or randomize if we don't have one
         self.pie = pie
 
         # TODO Update table count in game state
-        # TODO Take in the indices of the players as well
 
 
     def create_record(self, offer, response):
-
         return {'offerer': self.offerer_index, 'responder': self.responder_index,
                     'offer': offer, 'response': response}
 
@@ -260,8 +254,8 @@ class Table():
         return record
 
     def switch(self):
-        return Table(players=[self.offerer_index, self.responder_index],
-                    game=self.game, offerer=self.responder_index, pie=self.pie)
+        return Table(players=[self.responder_index, self.offerer_index],
+                    game=self.game, offerer=True, pie=self.pie)
 
 
 def valid_agent(player):
