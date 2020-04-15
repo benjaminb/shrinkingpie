@@ -96,7 +96,7 @@ class ISPT():
                 # Offer accepted or countered:
                 else:
                     # Create a table with roles switched
-                    new_tables.append(table.switch())
+                    new_tables.append(table.switch_players())
 
                     if result['response'] == 'accept':
                         self.award_points(players, result['offer'])
@@ -165,53 +165,6 @@ class ISPT():
 
 
 # Class for agent
-class Agent():
-    '''Duck type:
-        an Agent must have an offer method and a response method
-        The offer method must return a number 0 to 1, the proportion of the pie
-            they propose to split.
-        The response method must return one of three strings in the 'actions' list
-        Any logic may be implemented to arrive at these return values.
-        For complete information, the Agent must have access to the current
-            state of the game as well as the complete history.'''
-
-    def __init__(self, split=0.0, name=None):
-        self.split = split
-        self.name = name
-
-        # CONSIDER: should actions be an enum?
-        self.actions = ['accept', 'counter', 'reject']
-        # TODO make a helper function to ensure unique name strings
-        # memory location of agent can serve as ID?
-    # Needs to determine how to make an offer
-    # TODO add history
-    def offer(self, state, history, pie):
-        '''What offer to make
-            depending on current state of the Game
-            or anything from the past, in the history object
-
-            1 idea: pass a tuple of game states to test
-
-            this needs to return a proportion
-        '''
-
-        split = self.split
-        # logic for split
-        # if pie > x then split == 0.4
-        # if I had a list of conditions I could iterate over them
-        # and implement an offer strategy
-        # for condition, action in [list passed in]:
-        #   if condition1 then action1; break
-        return split
-
-    # Needs to determine a response
-    def response(self, offer, state, history, pie):
-        print("Agent's response as been called.")
-
-        # start off by always accepting
-        return self.actions[0]
-        # Given an offer and the history, how would I respond?
-
 
 class Table():
     """Determines structure for a round of actions"""
@@ -236,6 +189,8 @@ class Table():
         self.responder_index = players[1]
         self.responder = game.players[players[1]]
         self.game = game
+
+        # Is this property going to get used for anything?
         self.pie = pie
 
         # TODO Update table count in game state
@@ -248,15 +203,62 @@ class Table():
     def process(self, state, history):
 
         # Get actions and create record
-        offer = self.offerer.offer(state, history, self.pie)
-        response = self.responder.response(offer, state, history, self.pie)
+        offer = self.offerer.offer(self.responder, state, history, self.pie)
+        response = self.responder.response(self.offerer, offer, state, history, self.pie)
         record = self.create_record(offer, response)
         return record
 
-    def switch(self):
+    def switch_players(self):
         return Table(players=[self.responder_index, self.offerer_index],
                     game=self.game, offerer=True, pie=self.pie)
 
+
+class Agent():
+    '''Duck type:
+    an Agent must have an offer method and a response method
+    The offer method must return a number 0 to 1, the proportion of the pie
+    they propose to split.
+    The response method must return one of three strings in the 'actions' list
+    Any logic may be implemented to arrive at these return values.
+    For complete information, the Agent must have access to the current
+    state of the game as well as the complete history.'''
+
+    def __init__(self, split=0.0, name=None):
+        self.split = split
+        self.name = name
+
+        # CONSIDER: should actions be an enum?
+        self.actions = ['accept', 'counter', 'reject']
+        # TODO make a helper function to ensure unique name strings
+        # memory location of agent can serve as ID?
+        # Needs to determine how to make an offer
+
+    def offer(self, opponent, state, history, pie):
+            '''What offer to make
+            depending on current state of the Game
+            or anything from the past, in the history object
+
+            1 idea: pass a tuple of game states to test
+
+            this needs to return a proportion
+            '''
+
+            split = self.split
+            # logic for split
+            # if pie > x then split == 0.4
+            # if I had a list of conditions I could iterate over them
+            # and implement an offer strategy
+            # for condition, action in [list passed in]:
+            #   if condition1 then action1; break
+            return split
+
+            # Needs to determine a response
+    def response(self, opponent, offer, state, history, pie):
+                print("Agent's response as been called.")
+
+                # start off by always accepting
+                return self.actions[0]
+                # Given an offer and the history, how would I respond?
 
 def valid_agent(player):
     '''An agent must have the methods .offer and .response,
