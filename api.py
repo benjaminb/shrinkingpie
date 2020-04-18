@@ -1,3 +1,5 @@
+import numpy as np
+import matplotlib.pyplot as plt
 import random
 from dataclasses import dataclass
 from inspect import signature
@@ -72,12 +74,14 @@ class ISPT():
             self.state.scores[players[i]] += splits[i] * discounts[i]
         return
 
-    # Plays the tournament
+    # Play the tournament
     def play(self, max_rounds=1000):
+        print("@@@@@@@@@@ THE ISPT @@@@@@@@@@@")
 
         # Create the first round of tables by randomly pair player indices
         tables = self.init_tables()
         while self.state.round < max_rounds:
+            print("<><><> Round", self.state.round, "<><><>")
             results = []; new_tables = []
             while tables:
                 # Play each table & record the results in history
@@ -94,8 +98,7 @@ class ISPT():
 
                 # Offer was rejected:
                 if result.response == 'reject':
-
-                    # Re-match any untabled players
+                    # Re-match any untabled players. Otherwise, do nothing
                     for i, player in enumerate(players):
                         if not self.state.table_count[player]:
                             # TODO factor this out into a function?
@@ -122,6 +125,8 @@ class ISPT():
             # Update game information
             tables = new_tables
             self.history.append(results)
+            for result in results:
+                print(result)
 
             # Run checks
             # self.check_tables()
@@ -131,12 +136,10 @@ class ISPT():
             self.state.update_avg_scores()
             self.state.round += 1
 
-
-        print("History of game:")
-        # pp.pprint(self.history)
-
         print("Final game state:")
         pp.pprint(self.state)
+
+
         return
 
     def init_tables(self):
@@ -276,7 +279,6 @@ class ISPT():
 
         if no_problems and verbose:
             print("All good on round:", self.state.round)
-
 
 
 class Table():
