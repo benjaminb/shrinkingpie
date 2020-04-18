@@ -94,7 +94,7 @@ class Jonabot():
         if offer >= 0.5:
             return 'accept'
 
-        discount = state['current_discounts'][players][1]
+        discount = state.current_discounts[players][1]
         if discount < 0.3:
             return 'reject'
 
@@ -107,7 +107,7 @@ class GhostofRudin():
         def offer(self, players, state, history):
             # was I paired with this player last round?
             # if so, offer last offer + 0.1
-            if 1 not in state['current_discounts'][players]:
+            if 1 not in state.current_discounts[players]:
                 self.split = min(1, self.split + 0.1)
             else:
                 self.split = 0.1
