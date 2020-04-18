@@ -26,6 +26,7 @@ class ISPT():
 
         self.players = players
 
+
         # Maps player class instance to their index in self.players
         self.player_index = {player: i for i, player in enumerate(players)}
 
@@ -58,8 +59,11 @@ class ISPT():
 
         # Create the first round of tables by randomly pair player indices
         tables = self.init_tables()
-
-        while self.state['round'] <= max_rounds:
+        print("Tables:")
+        pp.pprint(self.state['current_discounts'])
+        print("Table count after init:")
+        pp.pprint(self.state['table_count'])
+        while self.state['round'] < max_rounds:
 
             results = []
             new_tables = []
@@ -78,7 +82,6 @@ class ISPT():
                 del self.state['current_discounts'][players]
 
                 # Offer was rejected:
-                self.decrease_table_count(players)
                 if result['response'] == 'reject':
 
                     # Re-match any untabled players
@@ -87,7 +90,6 @@ class ISPT():
                             # TODO factor this out into a function?
                             new_opponent = random.choice([j for j in range(self.state['num_players']) if j not in players])
                             new_pair = [player, new_opponent]
-                            # self.increase_table_count(new_pair)
 
                             # Apply discount
                             new_discounts = [discounts[i] * self.state['discounts'][player], 1]
@@ -102,7 +104,6 @@ class ISPT():
                         new_discounts = [discounts[i] * self.state['discounts'][players[i]] for i in range(2)]
 
                     # Either case: create table with player roles switched, appropriate discounts
-
                     new_tables.append(table.switch_players(discounts=new_discounts))
 
 
@@ -129,7 +130,7 @@ class ISPT():
             self.state['round'] += 1
 
         print("History of game:")
-        pp.pprint(self.history)
+        # pp.pprint(self.history)
 
         print("Final game state:")
         pp.pprint(self.state)
@@ -144,7 +145,6 @@ class ISPT():
             # Create a second table with a randomly chosen player
             pair = random.sample(indices, 2)
             self.state['odd_player'] = pair[1]
-            print("Odd player chosen for 2nd table in round 1:", pair[1])
             indices -= {pair[0]}
             pairs.append(pair)
 
@@ -154,19 +154,17 @@ class ISPT():
             indices -= set(pair)
             pairs.append(pair)
 
-        for pair in pairs:
-            self.increase_table_count(pair)
-
         return [Table(players=pair, game=self) for pair in pairs]
 
-    def increase_table_count(self, indices):
-        for i in indices:
-            self.state['table_count'][i] += 1
+    def increase_table_count(self, players):
+        for p in players:
+            self.state['table_count'][p] += 1
+            self.state['total_tables'][p] += 1
         return
 
-    def decrease_table_count(self, indices):
-        for i in indices:
-            self.state['table_count'][i] -= 1
+    def decrease_table_count(self, players):
+        for p in players:
+            self.state['table_count'][p] -= 1
         return
 
     # TODO
@@ -177,9 +175,8 @@ class ISPT():
         """Create an animated graph of tables & offers?"""
         raise NotImplementedError
 
-
     # Checks
-    def check_discounts(self):
+    def check_discounts(self, verbose=False):
         no_problems = True
         for record in self.history[-1]:
             players = (record['responder'], record['offerer'])
@@ -210,18 +207,15 @@ class ISPT():
 
             if record['response'] == 'reject':
                 # There should be a table with this player with discount and 1
-                print("Checking reject case...")
                 for i in range(2):
-                    print("Checking player has a table:")
                     tables = [table for table in self.state['current_discounts'] if players[i] in table]
 
                     if not tables:
                         no_problems = False
                         print("Player has no tables:", players[i])
                         continue
-                    print("tables found")
 
-                    if len(tables) > 1:
+                    if len(tables) > 1 and verbose:
                         print("player has more than 1 table and no new table would have been created")
                         continue
 
@@ -230,23 +224,22 @@ class ISPT():
 
                     old_tables_with_player = [t for t in old_tables if players[i] in t]
 
-                    if len(old_tables_with_player) > 1:
+                    if len(old_tables_with_player) > 1 and verbose:
                         print("last round player had", len(old_tables_with_player), "tables and no new table would have been created")
                         continue
 
                     # Else there the player has exactly one table and its discounts are determined
                     the_table = tables[0]
                     p_discount = record['discounts'][(i + 1) % 2] * self.state['discounts'][players[i]]
-                    print("Calculated discount for player:", p_discount)
                     if self.state['current_discounts'][the_table] not in [[1, p_discount], [p_discount, 1]]:
                         no_problems = False
                         print("Didn't find a table with the right discounts for player", players[i])
 
-        if no_problems:
+        if no_problems and verbose:
             print("No problems found in round", self.state['round'])
         return
 
-    def check_tables(self):
+    def check_tables(self, verbose=False):
         # Get most recent round of tables
         no_problems = True
         for record in self.history[-1]:
@@ -278,7 +271,7 @@ class ISPT():
                     print("Player 1 is untabled")
                 continue
 
-        if no_problems:
+        if no_problems and verbose:
             print("All good on round:", self.state['round'])
 
 
@@ -312,10 +305,8 @@ class Table():
 
         # Update the game information re this table's discounts
         self.game.state['current_discounts'][tuple(players)] = self.discounts
-        for player in self.players:
-            self.game.state['table_count'][player] += 1
-            self.game.state['total_tables'][player] += 1
 
+        self.game.increase_table_count(players)
 
     def create_record(self, offer, response):
 
@@ -325,8 +316,10 @@ class Table():
 
     def process(self, state, history):
         '''Gets each players' action and returns the record for game history'''
+        # decrease table count here?
         offer = self.game.players[self.offerer].offer(self.players, state, history)
         response = self.game.players[self.responder].response(self.players, offer, state, history)
+        self.game.decrease_table_count(self.players)
         return self.create_record(offer, response)
 
     def switch_players(self, discounts=[1, 1]):
