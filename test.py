@@ -1,24 +1,24 @@
 from api import *
 from agents import *
 
+# agents = {
+#   'aa': AlwaysAccepts,
+#   'tt': TitForTat,
+#   'tt10': lambda: TitForTat(0.1),
+#   'j': Jonabot,
+# }
+# agents['j']()
 
-x = Agent(0.4)
-y = Agent(0.3)
 aa = AlwaysAccepts()
 aap = AcceptsAnyPositive()
 ar = AlwaysRejects()
 h = Hardballer()
 tt = TitForTat()
 tt10 = TitForTat(0.1)
-game = ISPT(players=[tt, ar, tt10, h, h])
-game.play(max_rounds=5)
+j = Jonabot()
+j1 = Jonabot()
+g = GhostofRudin()
+g2 = GhostofRudin()
+game = ISPT(players=[j, j1, tt, tt10, h, h, h,  aa, g, g2])
+game.play(max_rounds=1000)
 print("Discounts:", game.state['discounts'])
-#
-# t = Table(players=[x, y], offerer=0)
-#
-# print('offerer', t.offerer)
-# print('responder', t.responder)
-#
-# t.process()
-#
-# print("history:", history)

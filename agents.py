@@ -5,20 +5,20 @@ class AlwaysAccepts():
     def __init__(self):
         pass
 
-    def offer(self, opponent, state, history, pie):
+    def offer(self, players, state, history):
         return 0.5
 
-    def response(self, opponent, offer, state, history, pie):
+    def response(self, players, offer, state, history):
         return 'accept'
 
 class AcceptsAnyPositive():
     def __init__(self):
             pass
 
-    def offer(self, opponent, state, history, pie):
+    def offer(self, players, state, history):
             return 0.5
 
-    def response(self, opponent, offer, state, history, pie):
+    def response(self, players, offer, state, history):
             return 'accept' if offer else 'reject'
 
 class AlwaysRejects():
@@ -26,34 +26,34 @@ class AlwaysRejects():
     def __init__(self):
         pass
 
-    def offer(self, opponent, state, history):
+    def offer(self, players, state, history):
         return 0.5
 
-    def response(self, opponent, offer, state, history):
+    def response(self, players, offer, state, history):
         return 'reject'
 
 class AlwaysCounterPrevious():
     def __init__(self):
         pass
 
-    def offer(self, opponent, state, history):
+    def offer(self, players, state, history):
         # look up other player in history previous round
         # for round in history:
 
         # If the other player has never made an offer:
         return 0.5
 
-    def response(self, opponent, offer, state, history):
+    def response(self, players, offer, state, history):
         return 'counter'
 
 class Hardballer():
     def __init__(self):
         pass
 
-    def offer(self, opponent, state, history):
+    def offer(self, players, state, history):
         return 0.01
 
-    def response(self, opponent, offer, state, history):
+    def response(self, players, offer, state, history):
         return 'counter'
 
 class TitForTat():
@@ -61,12 +61,63 @@ class TitForTat():
         self.init_offer = init_offer
         self.last_offer = {}
 
-    def offer(self, opponent, state, history):
-        # If
+    def offer(self, players, state, history):
+        opponent = players[1]
         if opponent in self.last_offer:
             return self.last_offer[opponent]
         return self.init_offer
 
-    def response(self, opponent, offer, state, history):
-        self.last_offer[opponent] = offer # Record the offer
+    def response(self, players, offer, state, history):
+        self.last_offer[players[0]] = offer # Record the offer
         return 'accept'
+
+class Jonabot():
+    name = 'Jonabot'
+    def __init__(self):
+        self.last_offer = {}
+
+    def offer(self, players, state, history):
+        # if first time meeting this particular player, offer 0.5
+        opponent = players[1]
+        if opponent not in self.last_offer:
+            return 0.5
+        # else
+        if self.last_offer[opponent] > 0.5:
+            return 1 - self.last_offer[opponent]
+
+        diff = 0.5 - self.last_offer[opponent]
+        return 1 - (self.last_offer[opponent] + diff / 2)
+
+    def response(self, players, offer, state, history):
+        self.last_offer[players[0]] = offer
+
+        if offer >= 0.5:
+            return 'accept'
+
+        discount = state['current_discounts'][players][1]
+        if discount < 0.3:
+            return 'reject'
+
+        return 'counter'
+
+class GhostofRudin():
+        def __init__(self):
+            self.split = 0.1
+
+        def offer(self, players, state, history):
+            # was I paired with this player last round?
+            # if so, offer last offer + 0.1
+            if 1 not in state['current_discounts'][players]:
+                self.split = min(1, self.split + 0.1)
+            else:
+                self.split = 0.1
+            return self.split
+
+        def response(self, players, offer, state, history):
+            if offer >= 0.5:
+                return 'accept'
+
+            if offer < 0.25:
+                return 'reject'
+
+            return 'counter'
