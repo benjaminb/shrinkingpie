@@ -1,6 +1,8 @@
+import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+from copy import deepcopy
 from dataclasses import dataclass
 from inspect import signature
 import pprint as pp
@@ -40,7 +42,8 @@ class State:
 class ISPT():
     """Structure of the game"""
 
-    def __init__(self, players, discounts=None, default_discount=0.9, initial_score=0):
+    def __init__(self, players, discounts=None, default_discount=0.9, initial_score=0,
+                 export_csv=False):
         # Validate input
         num_players = len(players)
         if num_players < 3:
@@ -53,6 +56,7 @@ class ISPT():
 
         self.players = players
         self.history = []
+        self.states = [] # TODO fold this into history?
         self.state = State(current_discounts = {}, # TODO rename table discounts?
                         discounts = discounts if discounts is not None else [default_discount] * num_players,
                         num_players = num_players,
@@ -134,12 +138,19 @@ class ISPT():
 
             # Update round
             self.state.update_avg_scores()
+            snapshot = deepcopy(self.state)
+            self.states.append(snapshot)
             self.state.round += 1
 
         print("Final game state:")
         pp.pprint(self.state)
 
+        print("final game history:")
+        for i, s in enumerate(self.states):
+            print("round:", i)
+            print(s.scores)
 
+        self.graph_scores()
         return
 
     def init_tables(self):
@@ -173,6 +184,31 @@ class ISPT():
             self.state.table_count[p] -= 1
         return
 
+    def graph_scores(self):
+        # x axis is the rounds
+        x = range(self.state.round - 1)
+        fig, axs = plt.subplots(2, 2)
+
+        for i in range(self.state.num_players):
+            a = [rnd.scores[i] for rnd in self.states]
+            b = [rnd.avg_score_per_round[i] for rnd in self.states]
+            c = [rnd.avg_score_per_offer[i] for rnd in self.states]
+            axs[0, 0].plot(x, a, label=str(i))
+            axs[0, 0].set_title('Score')
+            axs[0, 1].plot(x, b)
+            axs[0, 1].set_title('Average Score per Round')
+            axs[1, 0].plot(x, c)
+            axs[1, 0].set_title('Average Score per Offer')
+            axs[1, 1].axis('off')
+
+        fig.legend(loc='lower right')
+        plt.grid()
+        plt.show()
+        # plot a line for each player score in the game
+
+        # repeat for average score per round
+
+        # repeat for average score per offer
     # TODO
     def export_data(self):
         """export a CSV file for each player where rows are rounds and columns are
