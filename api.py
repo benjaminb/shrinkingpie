@@ -2,7 +2,7 @@ import random
 from inspect import signature
 import pprint as pp
 
-
+# Hi there
 
 class ISPT():
     """Structure of the game"""
@@ -32,7 +32,7 @@ class ISPT():
 
         # Initialize game information
         self.history = []
-        self.state = {  'current_discount': [1] * num_players,
+        self.state = {  'current_discounts': {},
                         'discounts': discounts if discounts is not None else [default_discount] * num_players,
                         'num_players': num_players,
                         'odd_player': None,
@@ -43,16 +43,13 @@ class ISPT():
 
         self.odd_player = None
 
-    def award_points(self, players, offer):
+    def award_points(self, players, discounts, offer):
         """ Players = [offerer_index, responder_index]
         """
         splits = (1 - offer, offer)
-        for split, player in zip(splits, players):
-            points = split * self.state['current_discount'][player]
-            self.state['scores'][player] += points
+        for i in range(2):
+            self.state['scores'][players[i]] += splits[i] * discounts[i]
 
-            # Reset discount factor
-            self.state['current_discount'][player] = 1
         return
 
     # Plays the tournament
@@ -61,6 +58,8 @@ class ISPT():
         # Create the first round of tables by randomly pair player indices
         tables = self.init_tables()
 
+        print("Initial game state:")
+        pp.pprint(self.state)
         while self.state['round'] <= max_rounds:
 
             results = []
@@ -73,38 +72,39 @@ class ISPT():
                 results.append(result)
 
                 # Determine scoring and next round tabling for players based on response
-                offerer = table.offerer_index
-                responder = table.responder_index
-                players = [offerer, responder]
+                players = table.offerer_index, table.responder_index
+                discounts = table.discounts
+
+                # Remove table discounts from current_discounts game information
+                del self.state['current_discounts'][players]
 
                 # Offer was rejected:
                 if result['response'] == 'reject':
                     self.decrease_table_count(players)
 
                     # Re-match any untabled players
-                    for player in players:
+                    for i, player in enumerate(players):
                         if not self.state['table_count'][player]:
-                            new_opponent = random.choice([i for i in range(self.state['num_players']) if i not in players])
+                            # TODO factor this out into a function?
+                            new_opponent = random.choice([j for j in range(self.state['num_players']) if j not in players])
                             new_pair = [player, new_opponent]
                             self.increase_table_count(new_pair)
-                            new_tables.append(Table(players=new_pair, game=self))
 
-                        # Apply discount factor
-                        self.state['current_discount'][player] *= self.state['discounts'][player]
-
+                            # Apply discount
+                            new_discounts = [discounts[i] * self.state['discounts'][player], 1]
+                            new_tables.append(Table(players=new_pair, game=self, current_discounts=new_discounts))
 
                 # Offer accepted or countered:
                 else:
-                    # Create a table with roles switched
-                    new_tables.append(table.switch_players())
-
                     if result['response'] == 'accept':
-                        self.award_points(players, result['offer'])
-                        # Allocate points
-                    else:
-                        # Apply discount factor
-                        for player in players:
-                            self.state['current_discount'][player] *= self.state['discounts'][player]
+                        self.award_points(players, discounts, result['offer'])
+                        new_discounts = [1, 1]
+                    else: # Counteroffer
+                        new_discounts = [discounts[i] * self.state['discounts'][players[i]] for i in range(2)]
+
+                    # Either case: create table with player roles switched, appropriate discounts
+                    new_tables.append(table.switch_players(discounts=new_discounts))
+
 
             # End while tables -- wrap up the round
             new_tables.reverse()
@@ -112,8 +112,8 @@ class ISPT():
 
             print("RESULTS:")
             pp.pprint(results)
-            print("SCORES:", self.state['scores'])
-            print("CURRENT DISCOUNTS:", self.state['current_discount'])
+            print("GAME STATE")
+            pp.pprint(self.state)
 
             # Update game information
             self.history.append(results)
@@ -169,7 +169,7 @@ class ISPT():
 class Table():
     """Determines structure for a round of actions"""
 
-    def __init__(self, players, game, offerer=False, pie=1):
+    def __init__(self, players, game, offerer=False, current_discounts=[1, 1]):
         """Takes two players and runs a round
            If offerer = True, player[0] is offerer
            If offerer = False, shuffle the players and 0th player is offerer
@@ -180,8 +180,12 @@ class Table():
         """
 
         # Get the offerer and responder
+        # TODO is this working right?
+
         if not offerer:
-            random.shuffle(players)
+            p = list(zip(players, current_discounts))
+            random.shuffle(p)
+            players, current_discounts = zip(*p)
 
         # Set agent class instances and indices
         self.offerer_index = players[0];
@@ -189,11 +193,10 @@ class Table():
         self.responder_index = players[1]
         self.responder = game.players[players[1]]
         self.game = game
+        self.discounts = current_discounts
 
-        # Is this property going to get used for anything?
-        self.pie = pie
-
-        # TODO Update table count in game state
+        # Update the game information re this table's discounts
+        self.game.state['current_discounts'][tuple(players)] = self.discounts
 
 
     def create_record(self, offer, response):
@@ -203,14 +206,17 @@ class Table():
     def process(self, state, history):
 
         # Get actions and create record
-        offer = self.offerer.offer(self.responder, state, history, self.pie)
-        response = self.responder.response(self.offerer, offer, state, history, self.pie)
+        offer = self.offerer.offer(self.responder, state, history)
+        response = self.responder.response(self.offerer, offer, state, history)
         record = self.create_record(offer, response)
         return record
 
-    def switch_players(self):
+    def switch_players(self, discounts=[1, 1]):
+        discounts.reverse() # We reverse here so when method is called, discounts still match indexing of players
         return Table(players=[self.responder_index, self.offerer_index],
-                    game=self.game, offerer=True, pie=self.pie)
+                    game=self.game,
+                    offerer=True,
+                    current_discounts=discounts)
 
 
 class Agent():
