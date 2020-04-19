@@ -1,4 +1,5 @@
 # Some players mocked up
+import random
 
 class AlwaysAccepts():
 
@@ -148,3 +149,38 @@ class Overthinker():
             if counter_count == max(counts):
                 return 'counter'
             return 'reject'
+
+class LinBot():
+    def __init__(self):
+        pass
+
+    def offer(self, players, state, history):
+        # average offer
+        if state.round == 1:
+            return 0.3
+
+        offers = []
+        for round in history:
+            for table in round:
+                offers.append(table.offer)
+        return mean(offers)
+
+    def response(self, players, offer, state, history):
+        if offer >= 0.5:
+            return 'accept'
+
+        if offer >= 0.3:
+            return 'counter'
+        return 'reject'
+
+class Rando():
+    def __init__(self):
+        pass
+
+    def offer(self, players, state, history):
+        # average offer
+        return random.random()
+
+    def response(self, players, offer, state, history):
+        choice = random.choice(['accept', 'counter', 'reject'])
+        return choice

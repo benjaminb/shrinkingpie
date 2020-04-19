@@ -42,8 +42,7 @@ class State:
 class ISPT():
     """Structure of the game"""
 
-    def __init__(self, players, discounts=None, default_discount=0.9, initial_score=0,
-                 export_csv=False):
+    def __init__(self, players, discounts=None, default_discount=0.9, initial_score=0):
         # Validate input
         num_players = len(players)
         if num_players < 3:
@@ -79,7 +78,7 @@ class ISPT():
         return
 
     # Play the tournament
-    def play(self, max_rounds=1000):
+    def play(self, max_rounds=1000, export_csv=False):
         print("@@@@@@@@@@ THE ISPT @@@@@@@@@@@")
 
         # Create the first round of tables by randomly pair player indices
@@ -151,6 +150,8 @@ class ISPT():
             print(s.scores)
 
         self.graph_scores()
+        if export_csv:
+            self.export_data()
         return
 
     def init_tables(self):
@@ -215,7 +216,17 @@ class ISPT():
         tables? Also a master sheet for overall scores, avg score per round?"""
 
         """Create an animated graph of tables & offers?"""
-        raise NotImplementedError
+        record = self.history[-1][-1]
+        fieldnames = [a for a in dir(record) if not a.startswith('__')]
+
+        with open('game.csv', mode='w') as csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+
+            writer.writeheader()
+            for round in self.history:
+                for record in round:
+                    writer.writerow({k: v for (k, v) in record.__dict__.items()})
+
 
     # Checks
     def check_discounts(self, verbose=False):
