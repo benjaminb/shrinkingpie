@@ -1,4 +1,5 @@
 import random
+from copy import deepcopy
 from dataclasses import dataclass
 from inspect import signature
 import pprint as pp
@@ -8,6 +9,7 @@ import pprint as pp
 class Record:
     offerer: int
     responder: int
+    players: tuple
     offer: float
     response: str # TODO make this an enum?
     discounts: list
@@ -51,6 +53,9 @@ class ISPT():
 
         self.players = players
         self.history = []
+        self.history1 = [None] # Purpose of putting in None is so that index of history will match the round it ends
+        # take the state object
+            # take the outcome of each table and append to each table in current_discounts
         self.state = State(current_discounts = {}, # TODO rename table discounts?
                         discounts = discounts if discounts is not None else [default_discount] * num_players,
                         num_players = num_players,
@@ -86,6 +91,7 @@ class ISPT():
                 results.append(result)
 
                 # Determine scoring and next round tabling for players based on response
+                # TODO Get all this out of the return value in result instead?
                 players = table.players
                 discounts = table.discounts
 
@@ -119,9 +125,27 @@ class ISPT():
 
             # End while tables -- wrap up the round
 
+            # Prepare history object
+            # to each table append the result
+            result_dict = {record.players: {'offer': record.offer,
+                                            'response': record.response,
+                                            'discounts': record.discounts}
+                                            for record in results}
+
+            # results is a list of dicts, what I want for each dict is to make the players a key
+            # Get the current game state, put in the result dict for current_discounts
+            result_obj = deepcopy(self.state)
+            result_obj.current_discounts = result_dict
+
+            print("RESULT OBJ:", result_obj)
+            self.history1.append(result_obj)
+
             # Update game information
             tables = new_tables
             self.history.append(results)
+
+
+
 
             # Run checks
             # self.check_tables()
@@ -133,11 +157,11 @@ class ISPT():
 
 
         print("History of game:")
-        # pp.pprint(self.history)
+        pp.pprint(self.history1)
 
         print("Final game state:")
         pp.pprint(self.state)
-        return
+        return self.history1
 
     def init_tables(self):
         pairs = []
@@ -312,7 +336,8 @@ class Table():
         self.game.increase_table_count(players)
 
     def create_record(self, offer, response):
-        return Record(offerer=self.offerer, responder=self.responder, offer=offer, response=response,
+        return Record(offerer=self.offerer, responder=self.responder,
+                        players=self.players, offer=offer, response=response,
                         discounts=self.game.state.current_discounts[self.players])
 
     def process(self):
