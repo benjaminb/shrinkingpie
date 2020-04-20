@@ -124,6 +124,7 @@ class GhostofRudin():
             return 'counter'
 
 from statistics import mean
+<<<<<<< HEAD
 class Overthinker():
         def __init__(self):
             pass
@@ -151,10 +152,14 @@ class Overthinker():
             return 'reject'
 
 class LinBot():
+=======
+class Mimic():
+>>>>>>> test
     def __init__(self):
         pass
 
     def offer(self, players, state, history):
+<<<<<<< HEAD
         # average offer
         if state.round == 1:
             return 0.3
@@ -184,3 +189,19 @@ class Rando():
     def response(self, players, offer, state, history):
         choice = random.choice(['accept', 'counter', 'reject'])
         return choice
+=======
+        if state.round == 1:
+            return 0.01
+
+        return mean([table['offer'] for table in history[-1].current_discounts.values()])
+
+    def response(self, players, offer, state, history):
+        if state.round == 1:
+            return 'accept'
+
+        responses = [table['response'] for table in history[-1].current_discounts.values()]
+        counts = {'accept': responses.count('accept'),
+                    'reject': responses.count('reject'),
+                    'counter': responses.count('counter')}
+        return max(counts, key=counts.get)
+>>>>>>> test

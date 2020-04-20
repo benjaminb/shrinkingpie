@@ -12,6 +12,7 @@ import pprint as pp
 class Record:
     offerer: int
     responder: int
+    players: tuple
     offer: float
     response: str # TODO make this an enum?
     discounts: list
@@ -54,13 +55,16 @@ class ISPT():
             raise ValueError(errmsg)
 
         self.players = players
+<<<<<<< HEAD
         self.history = []
         self.states = [] # TODO fold this into history?
+=======
+>>>>>>> test
         self.state = State(current_discounts = {}, # TODO rename table discounts?
                         discounts = discounts if discounts is not None else [default_discount] * num_players,
                         num_players = num_players,
                         odd_player = None,
-                        round = 1,
+                        round = 0,
                         scores = [initial_score] * num_players,
                         avg_score_per_round = [0] * num_players,
                         avg_score_per_offer = [0] * num_players,
@@ -68,6 +72,7 @@ class ISPT():
                         total_tables = [0] * num_players # total number of tables each player has participated in
                      )
         self.odd_player = None
+        self.history = [deepcopy(self.state)]
 
     def award_points(self, players, discounts, offer):
         """ Players = (offerer_index, responder_index)
@@ -81,11 +86,12 @@ class ISPT():
     def play(self, max_rounds=1000, export_csv=False):
         print("@@@@@@@@@@ THE ISPT @@@@@@@@@@@")
 
-        # Create the first round of tables by randomly pair player indices
         tables = self.init_tables()
+
         while self.state.round < max_rounds:
             print("<><><> Round", self.state.round, "<><><>")
             results = []; new_tables = []
+            self.state.round += 1
             while tables:
                 # Play each table & record the results in history
                 table = tables.pop(0)
@@ -93,6 +99,7 @@ class ISPT():
                 results.append(result)
 
                 # Determine scoring and next round tabling for players based on response
+                # TODO Get all this out of the return value in result instead?
                 players = table.players
                 discounts = table.discounts
 
@@ -123,18 +130,34 @@ class ISPT():
                     # Either case: create table with player roles switched, appropriate discounts
                     new_tables.append(table.switch_players(discounts=new_discounts))
 
-            # End while tables -- wrap up the round
 
             # Update game information
             tables = new_tables
+<<<<<<< HEAD
             self.history.append(results)
             for result in results:
                 print(result)
+=======
+
+
+            # Update round
+            self.state.update_avg_scores()
+
+            # Prepare history object
+            result_obj = deepcopy(self.state)
+            result_obj.current_discounts = {record.players: {'offer': record.offer,
+                                                             'response': record.response,
+                                                             'discounts': record.discounts}
+                                            for record in results}
+
+            self.history.append(result_obj)
+>>>>>>> test
 
             # Run checks
             # self.check_tables()
             # self.check_discounts()
 
+<<<<<<< HEAD
             # Update round
             self.state.update_avg_scores()
             snapshot = deepcopy(self.state)
@@ -153,6 +176,18 @@ class ISPT():
         if export_csv:
             self.export_data()
         return
+=======
+            # End of round
+
+
+
+        print("History of game:")
+        pp.pprint(self.history)
+
+        print("Final game state:")
+        pp.pprint(self.state)
+        return self.history
+>>>>>>> test
 
     def init_tables(self):
         pairs = []
@@ -361,7 +396,8 @@ class Table():
         self.game.increase_table_count(players)
 
     def create_record(self, offer, response):
-        return Record(offerer=self.offerer, responder=self.responder, offer=offer, response=response,
+        return Record(offerer=self.offerer, responder=self.responder,
+                        players=self.players, offer=offer, response=response,
                         discounts=self.game.state.current_discounts[self.players])
 
     def process(self):
