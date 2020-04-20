@@ -52,15 +52,11 @@ class ISPT():
             raise ValueError(errmsg)
 
         self.players = players
-        self.history = []
-        self.history1 = [None] # Purpose of putting in None is so that index of history will match the round it ends
-        # take the state object
-            # take the outcome of each table and append to each table in current_discounts
         self.state = State(current_discounts = {}, # TODO rename table discounts?
                         discounts = discounts if discounts is not None else [default_discount] * num_players,
                         num_players = num_players,
                         odd_player = None,
-                        round = 1,
+                        round = 0,
                         scores = [initial_score] * num_players,
                         avg_score_per_round = [0] * num_players,
                         avg_score_per_offer = [0] * num_players,
@@ -68,6 +64,7 @@ class ISPT():
                         total_tables = [0] * num_players # total number of tables each player has participated in
                      )
         self.odd_player = None
+        self.history = [deepcopy(self.state)]
 
     def award_points(self, players, discounts, offer):
         """ Players = (offerer_index, responder_index)
@@ -80,10 +77,11 @@ class ISPT():
     # Plays the tournament
     def play(self, max_rounds=1000):
 
-        # Create the first round of tables by randomly pair player indices
         tables = self.init_tables()
+
         while self.state.round < max_rounds:
             results = []; new_tables = []
+            self.state.round += 1
             while tables:
                 # Play each table & record the results in history
                 table = tables.pop(0)
@@ -123,45 +121,37 @@ class ISPT():
                     # Either case: create table with player roles switched, appropriate discounts
                     new_tables.append(table.switch_players(discounts=new_discounts))
 
-            # End while tables -- wrap up the round
-
-            # Prepare history object
-            # to each table append the result
-            result_dict = {record.players: {'offer': record.offer,
-                                            'response': record.response,
-                                            'discounts': record.discounts}
-                                            for record in results}
-
-            # results is a list of dicts, what I want for each dict is to make the players a key
-            # Get the current game state, put in the result dict for current_discounts
-            result_obj = deepcopy(self.state)
-            result_obj.current_discounts = result_dict
-
-            print("RESULT OBJ:", result_obj)
-            self.history1.append(result_obj)
 
             # Update game information
             tables = new_tables
-            self.history.append(results)
 
 
+            # Update round
+            self.state.update_avg_scores()
 
+            # Prepare history object
+            result_obj = deepcopy(self.state)
+            result_obj.current_discounts = {record.players: {'offer': record.offer,
+                                                             'response': record.response,
+                                                             'discounts': record.discounts}
+                                            for record in results}
+
+            self.history.append(result_obj)
 
             # Run checks
             # self.check_tables()
             # self.check_discounts()
 
-            # Update round
-            self.state.update_avg_scores()
-            self.state.round += 1
+            # End of round
+
 
 
         print("History of game:")
-        pp.pprint(self.history1)
+        pp.pprint(self.history)
 
         print("Final game state:")
         pp.pprint(self.state)
-        return self.history1
+        return self.history
 
     def init_tables(self):
         pairs = []

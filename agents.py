@@ -121,3 +121,24 @@ class GhostofRudin():
                 return 'reject'
 
             return 'counter'
+
+from statistics import mean
+class Mimic():
+    def __init__(self):
+        pass
+
+    def offer(self, players, state, history):
+        if state.round == 1:
+            return 0.01
+
+        return mean([table['offer'] for table in history[-1].current_discounts.values()])
+
+    def response(self, players, offer, state, history):
+        if state.round == 1:
+            return 'accept'
+
+        responses = [table['response'] for table in history[-1].current_discounts.values()]
+        counts = {'accept': responses.count('accept'),
+                    'reject': responses.count('reject'),
+                    'counter': responses.count('counter')}
+        return max(counts, key=counts.get)
