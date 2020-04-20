@@ -55,11 +55,6 @@ class ISPT():
             raise ValueError(errmsg)
 
         self.players = players
-<<<<<<< HEAD
-        self.history = []
-        self.states = [] # TODO fold this into history?
-=======
->>>>>>> test
         self.state = State(current_discounts = {}, # TODO rename table discounts?
                         discounts = discounts if discounts is not None else [default_discount] * num_players,
                         num_players = num_players,
@@ -133,11 +128,6 @@ class ISPT():
 
             # Update game information
             tables = new_tables
-<<<<<<< HEAD
-            self.history.append(results)
-            for result in results:
-                print(result)
-=======
 
 
             # Update round
@@ -151,32 +141,11 @@ class ISPT():
                                             for record in results}
 
             self.history.append(result_obj)
->>>>>>> test
 
             # Run checks
             # self.check_tables()
             # self.check_discounts()
 
-<<<<<<< HEAD
-            # Update round
-            self.state.update_avg_scores()
-            snapshot = deepcopy(self.state)
-            self.states.append(snapshot)
-            self.state.round += 1
-
-        print("Final game state:")
-        pp.pprint(self.state)
-
-        print("final game history:")
-        for i, s in enumerate(self.states):
-            print("round:", i)
-            print(s.scores)
-
-        self.graph_scores()
-        if export_csv:
-            self.export_data()
-        return
-=======
             # End of round
 
 
@@ -187,7 +156,6 @@ class ISPT():
         print("Final game state:")
         pp.pprint(self.state)
         return self.history
->>>>>>> test
 
     def init_tables(self):
         pairs = []

@@ -19,15 +19,6 @@ j = Jonabot()
 j1 = Jonabot()
 g = GhostofRudin()
 g2 = GhostofRudin()
-<<<<<<< HEAD
-o = Overthinker()
-l = LinBot()
-r = Rando()
-game = ISPT(players=[o, j, j1, g, h, tt, tt10, aa, ar, r, l])
-game.play(max_rounds=50, export_csv=False)
-print("Discounts:", game.state.discounts)
-=======
 m = Mimic()
 game = ISPT(players=[j, j1, g, m])
 history = game.play(max_rounds=4)
->>>>>>> test

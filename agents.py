@@ -124,75 +124,15 @@ class GhostofRudin():
             return 'counter'
 
 from statistics import mean
-<<<<<<< HEAD
-class Overthinker():
-        def __init__(self):
-            pass
 
-        def offer(self, players, state, history):
-            # was I paired with this player last round?
-            # if so, offer last offer + 0.1
-            if state.round == 1:
-                return 0.01
-            return mean([record.offer for record in history[-1]])
-
-        def response(self, players, offer, state, history):
-            if state.round == 1:
-                return 'accept'
-
-            accept_count = sum([1 for record in history[-1] if record.response == 'accept'])
-            counter_count = sum([1 for record in history[-1] if record.response == 'counter'])
-            reject_count = sum([1 for record in history[-1] if record.response == 'reject'])
-            counts = [accept_count, counter_count, reject_count]
-
-            if accept_count == max(counts):
-                return 'accept'
-            if counter_count == max(counts):
-                return 'counter'
-            return 'reject'
-
-class LinBot():
-=======
 class Mimic():
->>>>>>> test
+
     def __init__(self):
         pass
 
     def offer(self, players, state, history):
-<<<<<<< HEAD
-        # average offer
-        if state.round == 1:
-            return 0.3
-
-        offers = []
-        for round in history:
-            for table in round:
-                offers.append(table.offer)
-        return mean(offers)
-
-    def response(self, players, offer, state, history):
-        if offer >= 0.5:
-            return 'accept'
-
-        if offer >= 0.3:
-            return 'counter'
-        return 'reject'
-
-class Rando():
-    def __init__(self):
-        pass
-
-    def offer(self, players, state, history):
-        # average offer
-        return random.random()
-
-    def response(self, players, offer, state, history):
-        choice = random.choice(['accept', 'counter', 'reject'])
-        return choice
-=======
         if state.round == 1:
             return 0.01
-
         return mean([table['offer'] for table in history[-1].current_discounts.values()])
 
     def response(self, players, offer, state, history):
@@ -204,4 +144,3 @@ class Rando():
                     'reject': responses.count('reject'),
                     'counter': responses.count('counter')}
         return max(counts, key=counts.get)
->>>>>>> test
