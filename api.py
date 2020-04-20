@@ -81,6 +81,7 @@ class ISPT():
     def play(self, max_rounds=1000, export_csv=False):
         print("@@@@@@@@@@ THE ISPT @@@@@@@@@@@")
 
+        # test
         tables = self.init_tables()
 
         while self.state.round < max_rounds:
