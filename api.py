@@ -368,8 +368,7 @@ class Table():
         self.game = game
 
         # Update the game information re this table's discounts
-        self.game.state.current_discounts[tuple(players)] = self.discounts
-
+        self.game.state.current_discounts[self.players] = self.discounts
         self.game.increase_table_count(players)
 
     # Is a record just a table with the offer filled in?

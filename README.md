@@ -3,7 +3,7 @@
 
 ## Abstract
 
-In the shrinking pie game, players negotiate how to split a fixed number of points between them. Each turn they do not come to an agreement, the ‘pie’ (points available to be split) shrinks according to a discount factor. Each player aims to maximize their own score. Between two players and with a fixed number of rounds, backward propagation shows the optimal offer that should be made and accepted in the first round. This ruleset expands this game to support multiple players negotiating in pairs with the option of leaving a negotiation to attempt striking a deal with a more amenable player.
+In the shrinking pie game, two players negotiate how to split a fixed number of points between them. Each turn they do not come to an agreement, the ‘pie’ (points available to be split) shrinks according to a discount factor. Each player aims to maximize their own score. Between two players and with a fixed number of rounds, backward propagation shows the optimal offer that should be made and accepted in the first round. This ruleset expands the two-player game to a tournament with three or more players negotiating in pairs. Most notably, players have an additional action they can play: the option of leaving a negotiation to attempt striking a deal with a more amenable player.
 
 ## Basic Rules
 
@@ -11,34 +11,38 @@ In the shrinking pie game, players negotiate how to split a fixed number of poin
 ### Initial setup
 
 
-The ISPT is defined for 3 or more players. Players are randomly matched in pairs. Each match will be called a “meet”. If there are an odd number of players, then one player is randomly matched with another player who has 'already' been paired. I.e., the randomly picked player will be set to meet with two different players in the same round.
+Players are randomly matched in pairs. Each match is called a "table", i.e. a negotiation table. If there are an odd number of players in the tournament then one player is randomly chosen to be tabled with two different players, so that all players have at least one table.
 
 
 ### Actions
-In round 1, one player in each pair is randomly chosen to offer first. This will be Player A, who will offer to Player B a split of the pie. Specifically, Player A's actions are to offer any value between 0 and 1 inclusive according to the proportion they wish to split:
-![O \in \[0, 1\]](https://render.githubusercontent.com/render/math?math=O%20%5Cin%20%5B0%2C%201%5D)
 
-Player B then has 3 available actions:
-1. Accept ("A")
-2. Counteroffer ("C")
-3. Reject ("R")
+At each of these initial tables, one player is randomly selected to go first (the 'offerer'). The offerer makes an offer between 0 and 1 inclusive, representing the proportion of the pie they are offering to the other player (the 'responder'). Specifically, the offerer's available actions are $O \in [0, 1]$.
 
--If Player B accepts: both players split the value of the pie as proposed by Player A. The points get added to each players’ scores. On subsequent rounds, the previous meet is repeated with Player B now making an offer to Player A. Player B chooses an action $O \in [0, 1]$ and Player A responds with an action in $\{A, C, R\}$
+The responder then has 3 available actions: accept, counteroffer, or reject (or actions $= \{ A, C, R\}$). At all tables, the offerers simultaneously propose their splits and the responders immediately and simultaneously choose their responses.
 
--If Player B counteroffers: the pie shrinks by the discount parameter and the game advances to the next round. Player A may now choose A, C, or R. If they accept, the pie is split by Player B's proposed proportion and the points added to each player's score.
 
-If Player B rejects: Both players receive nothing for this round. Player B, who rejected, gets randomly paired with another player (not including player A) and a new meet begins with a new pie shrunk by the discount parameter. Player A waits to be paired with another player by this same mechanism.
+-Responder accepts: both players split the value of the pie as proposed by Player A. The points get added to each players’ scores. On subsequent rounds, the this table is repeated with the roles reversed: the responder makes an offer $O \in [0, 1]$ and the offerer responds with an action in $\{A, C, R\}$. In other words, the same two players are placed at a table with the responder becoming the offerer and the offerer becoming the responder.
 
-Alternate: instead of present value, multiply each split by discount parameter. Since d represents opportunity cost, if a player has money in the bank it should make d % per turn
+-Responder counteroffers: neither player wins any points and the pie shrinks by the discount parameter. In the next round the players are paired at a table with the roles reversed as in the 'accept' case (offerer becomes responder and vice versa), only now they are negotiating over the shrunken pie.
 
-Game Parameters:
--Discount parameter: one global parameter or different values for different players
--Information: do players have complete information or something less?
--Length of game: number of rounds
+-Responder rejects: neither player wins any points and the players will not be paired together in the next round. If rejections would cause the responder to be in zero tables, then the responder is randomly paired with another player in the tournament excluding the offerer. In the next round, one of the players is randomly chosen to be the offerer, however the pie is discounted for the rejecting player, while it is full for the randomly chosen player$\dagger$. The same process applies to the offerer.
 
-Variations:
--Add a cost per round (a maintenance expense). Players start with a bank of points from which some amount is subtracted each round. If a player reaches 0, they are eliminated from the tournament.
--Some other kind of replicator mechanism?
 
-Questions:
--Does being an odd player and thus playing 2 tables in round 1 confer an advantage?
+### Game Parameters:
+The game currently defines these parameters:
+-Length of game: The number of rounds are specified any integer 1 or greater. The default length is 1000 rounds. Future versions of the game will support a random termination parameter.
+-Discount parameter: A discount parameter is specified for each player, any real number between 0 and 1. Players could all have the same discount parameter or players can individually have different discounts assigned.
+-Information: the players have complete information. That is they are aware of all the actions that all players have taken in previous rounds. Additionally, they are aware of all discount factors, scores, and other game statistics. Future versions of the game will support restricting the information available to players.
+
+### Game Statistics:
+
+Each player of course has a score which is the sum of all points they have earned. Since this number is highly sensitive to the number of tables a player participates in (which itself is random), the game also tracks:
+-Average points per round
+-Average points per offer
+
+Both these statistics may be meaningful: average points per round perhaps speaks to a player's ability to profit by maintaining relationships, while average points per offer may indicate the player's ability as a dealmaker.
+
+## API
+in development.
+
+$\dagger$It may help to imagine that each player has their own pie which discounts round by round until they accept an offer or an offer is accepted, at which point they get what's left of their pie. Also, in the rare but possible case that a player is tabled with all other players in the same round, and all tables end in rejection, then the untabled player gets randomly paired with any player in the tournament.
