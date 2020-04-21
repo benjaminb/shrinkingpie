@@ -217,7 +217,7 @@ class ISPT():
 
         """Create an animated graph of tables & offers?"""
 
-        with open('tables.csv', mode='w') as csv_file:
+        with open('data/tables.csv', mode='w') as csv_file:
             writer = csv.DictWriter(csv_file,
                 fieldnames=['round', 'offerer', 'responder', 'offer', 'response', 'discounts'])
 
@@ -233,7 +233,7 @@ class ISPT():
 
         columns = list(State.__dataclass_fields__.keys())
         columns.remove('current_discounts')
-        with open('stats.csv', mode='w') as csv_file:
+        with open('data/stats.csv', mode='w') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=columns)
 
             writer.writeheader()
