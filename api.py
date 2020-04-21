@@ -84,7 +84,6 @@ class ISPT():
         tables = self.init_tables()
 
         while self.state.round < max_rounds:
-            print("<><><> Round", self.state.round, "<><><>")
             results = []; new_tables = []
             self.state.round += 1
             while tables:
@@ -150,11 +149,15 @@ class ISPT():
 
 
 
-        print("History of game:")
-        pp.pprint(self.history)
+        # print("History of game:")
+        # pp.pprint(self.history)
+        #
+        # print("Final game state:")
+        # pp.pprint(self.state)
 
-        print("Final game state:")
-        pp.pprint(self.state)
+        if export_csv:
+            self.export_data()
+
         return self.history
 
     def init_tables(self):
@@ -189,14 +192,13 @@ class ISPT():
         return
 
     def graph_scores(self):
-        # x axis is the rounds
-        x = range(self.state.round - 1)
+        x = range(self.state.round + 1)
         fig, axs = plt.subplots(2, 2)
 
         for i in range(self.state.num_players):
-            a = [rnd.scores[i] for rnd in self.states]
-            b = [rnd.avg_score_per_round[i] for rnd in self.states]
-            c = [rnd.avg_score_per_offer[i] for rnd in self.states]
+            a = [rnd.scores[i] for rnd in self.history]
+            b = [rnd.avg_score_per_round[i] for rnd in self.history]
+            c = [rnd.avg_score_per_offer[i] for rnd in self.history]
             axs[0, 0].plot(x, a, label=str(i))
             axs[0, 0].set_title('Score')
             axs[0, 1].plot(x, b)
@@ -208,28 +210,35 @@ class ISPT():
         fig.legend(loc='lower right')
         plt.grid()
         plt.show()
-        # plot a line for each player score in the game
 
-        # repeat for average score per round
-
-        # repeat for average score per offer
-    # TODO
     def export_data(self):
         """export a CSV file for each player where rows are rounds and columns are
         tables? Also a master sheet for overall scores, avg score per round?"""
 
         """Create an animated graph of tables & offers?"""
-        record = self.history[-1][-1]
-        fieldnames = [a for a in dir(record) if not a.startswith('__')]
 
-        with open('game.csv', mode='w') as csv_file:
-            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        with open('tables.csv', mode='w') as csv_file:
+            writer = csv.DictWriter(csv_file,
+                fieldnames=['round', 'offerer', 'responder', 'offer', 'response', 'discounts'])
 
             writer.writeheader()
             for round in self.history:
-                for record in round:
-                    writer.writerow({k: v for (k, v) in record.__dict__.items()})
+                for table in round.current_discounts:
+                    result = round.current_discounts[table]
+                    row = {k: result[k] for k in result}
+                    row['offerer'], row['responder'] = table
+                    row['round'] = round.round
+                    writer.writerow(row)
 
+
+        columns = list(State.__dataclass_fields__.keys())
+        columns.remove('current_discounts')
+        with open('stats.csv', mode='w') as csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=columns)
+
+            writer.writeheader()
+            for round in self.history:
+                writer.writerow({col: round.__dict__[col] for col in columns})
 
     # Checks
     def check_discounts(self, verbose=False):
@@ -411,7 +420,7 @@ class Agent():
             depending on current state of the Game
             or anything from the past, in the history object
 
-            1 idea: pass a tuple of game states to test
+            1 idea: pass a tuple of game history to test
 
             this needs to return a proportion
             '''

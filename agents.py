@@ -144,3 +144,36 @@ class Mimic():
                     'reject': responses.count('reject'),
                     'counter': responses.count('counter')}
         return max(counts, key=counts.get)
+
+class DD():
+    def __init__(self):
+        pass
+
+    def offer(self, players, state, history):
+        # Determine the last offer the opponent accepted, make that offer
+        if state.round == 1:
+            return 0.5
+
+        opponent = players[1]
+        last = self.last_accepted(opponent, history)
+        if last:
+            return last
+        # If they never accepted an offer, make the average offer
+        return mean([table['offer'] for table in history[-1].current_discounts.values()])
+
+
+    def response(self, players, offer, state, history):
+        # if average offer of all OTHER players is higher than this offer, reject
+        if state.round == 1:
+            return 'accept'
+
+        avg_offer = mean([table['offer'] for table in history[-1].current_discounts.values()])
+
+        return 'accept' if avg_offer <= offer else 'reject'
+
+    def last_accepted(self, player, history):
+        for i in range(len(history)):
+            for table in history[-(i + 1)].current_discounts:
+                if player == table[1] and history[-(i + 1)].current_discounts[table]['response'] == 'accept':
+                    return history[-(i + 1)].current_discounts[table]['offer']
+        return None
