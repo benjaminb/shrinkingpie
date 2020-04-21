@@ -372,6 +372,7 @@ class Table():
 
         self.game.increase_table_count(players)
 
+    # Is a record just a table with the offer filled in?
     def create_record(self, offer, response):
         return Record(offerer=self.offerer, responder=self.responder,
                         players=self.players, offer=offer, response=response,
@@ -381,8 +382,10 @@ class Table():
         '''Gets each players' action, decreases the table count (since this table
            will be discarded) and returns the record for game history'''
 
-        offer = self.game.players[self.offerer].offer(self.players, self.game.state, self.game.history)
-        response = self.game.players[self.responder].response(self.players, offer, self.game.state, self.game.history)
+        # modify agents so they take a table instead of all this junk
+        # TODO make offer and response methods somehow private, so agents can't
+        offer = self.game.players[self.offerer].offer(self)
+        response = self.game.players[self.responder].response(self, offer)
         self.game.decrease_table_count(self.players)
         return self.create_record(offer, response)
 
