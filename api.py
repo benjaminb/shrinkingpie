@@ -78,7 +78,7 @@ class ISPT():
         return
 
     # Play the tournament
-    def play(self, max_rounds=1000, export_csv=False):
+    def play(self, max_rounds=1000, response_noise=0.01, export_csv=False):
         print("@@@@@@@@@@ THE ISPT @@@@@@@@@@@")
 
         tables = self.init_tables()
@@ -90,9 +90,6 @@ class ISPT():
                 # Play each table & record the results in history
                 table = tables.pop(0)
                 result = table.process()
-                results.append(result)
-
-                # Determine scoring and next round tabling for players based on response
                 # TODO Get all this out of the return value in result instead?
                 players = table.players
                 discounts = table.discounts
@@ -100,7 +97,14 @@ class ISPT():
                 # Remove table discounts from current_discounts game information
                 del self.state.current_discounts[players]
 
-                # Offer was rejected:
+                # Check for random noise case
+                if random.random() < response_noise:
+                    false_responses = {'accept', 'reject', 'counter'} - {result.response}
+                    result.response = random.choice(list(false_responses))
+
+                results.append(result)
+
+                # Determine scoring and next round tabling for players based on response
                 if result.response == 'reject':
                     # Re-match any untabled players. Otherwise, do nothing
                     for i, player in enumerate(players):
