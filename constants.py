@@ -1,0 +1,3 @@
+ACCEPT = 0
+COUNTER = 1
+REJECT = 2

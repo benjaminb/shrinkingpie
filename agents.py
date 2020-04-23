@@ -1,5 +1,6 @@
 # Some players mocked up
 import random
+from constants import *
 
 class AlwaysAccepts():
 
@@ -10,7 +11,7 @@ class AlwaysAccepts():
         return 0.5
 
     def response(self, table, offer):
-        return 'accept'
+        return ACCEPT
 
 class AcceptsAnyPositive():
     def __init__(self):
@@ -20,7 +21,7 @@ class AcceptsAnyPositive():
             return 0.5
 
     def response(self, table, offer):
-            return 'accept' if offer else 'reject'
+            return ACCEPT if offer else REJECT
 
 class AlwaysRejects():
 
@@ -31,7 +32,7 @@ class AlwaysRejects():
         return 0.5
 
     def response(self, table, offer):
-        return 'reject'
+        return REJECT
 
 class AlwaysCounterPrevious():
     def __init__(self):
@@ -45,7 +46,7 @@ class AlwaysCounterPrevious():
         return 0.5
 
     def response(self, table, offer):
-        return 'counter'
+        return COUNTER
 
 class Hardballer():
     def __init__(self):
@@ -55,7 +56,7 @@ class Hardballer():
         return 0.01
 
     def response(self, table, offer):
-        return 'counter'
+        return COUNTER
 
 class TitForTat():
     def __init__(self, init_offer=0.5):
@@ -70,7 +71,7 @@ class TitForTat():
 
     def response(self, table, offer):
         self.last_offer[table.players[0]] = offer # Record the offer
-        return 'accept'
+        return ACCEPT
 
 class Jonabot():
     name = 'Jonabot'
@@ -93,13 +94,13 @@ class Jonabot():
         self.last_offer[table.players[0]] = offer
 
         if offer >= 0.5:
-            return 'accept'
+            return ACCEPT
 
         discount = table.game.state.current_discounts[table.players][1]
         if discount < 0.3:
-            return 'reject'
+            return REJECT
 
-        return 'counter'
+        return COUNTER
 
 class GhostofRudin():
         def __init__(self):
@@ -116,12 +117,12 @@ class GhostofRudin():
 
         def response(self, table, offer):
             if offer >= 0.5:
-                return 'accept'
+                return ACCEPT
 
             if offer < 0.25:
-                return 'reject'
+                return REJECT
 
-            return 'counter'
+            return COUNTER
 
 from statistics import mean
 
@@ -137,12 +138,12 @@ class Mimic():
 
     def response(self, table, offer):
         if table.game.state.round == 1:
-            return 'accept'
+            return ACCEPT
 
         responses = [t['response'] for t in table.game.history[-1].current_discounts.values()]
-        counts = {'accept': responses.count('accept'),
-                    'reject': responses.count('reject'),
-                    'counter': responses.count('counter')}
+        counts = {ACCEPT: responses.count(ACCEPT),
+                    REJECT: responses.count(REJECT),
+                    COUNTER: responses.count(COUNTER)}
         return max(counts, key=counts.get)
 
 class DD():
@@ -165,15 +166,15 @@ class DD():
     def response(self, table, offer):
         # if average offer of all OTHER players is higher than this offer, reject
         if table.game.state.round == 1:
-            return 'accept'
+            return ACCEPT
 
         avg_offer = mean([t['offer'] for t in table.game.history[-1].current_discounts.values()])
 
-        return 'accept' if avg_offer <= offer else 'reject'
+        return ACCEPT if avg_offer <= offer else REJECT
 
     def last_accepted(self, player, table):
         for i in range(len(table.game.history)):
             for t in table.game.history[-(i + 1)].current_discounts:
-                if player == t[1] and table.game.history[-(i + 1)].current_discounts[t]['response'] == 'accept':
+                if player == t[1] and table.game.history[-(i + 1)].current_discounts[t]['response'] == ACCEPT:
                     return table.game.history[-(i + 1)].current_discounts[t]['offer']
         return None
