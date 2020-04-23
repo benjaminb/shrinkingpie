@@ -2,6 +2,7 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+from constants import *
 from copy import deepcopy
 from dataclasses import dataclass
 from inspect import signature
@@ -99,13 +100,13 @@ class ISPT():
 
                 # Check for random noise case
                 if random.random() < response_noise:
-                    false_responses = {'accept', 'reject', 'counter'} - {result.response}
+                    false_responses = {0, 1, 2} - {result.response}
                     result.response = random.choice(list(false_responses))
 
                 results.append(result)
 
                 # Determine scoring and next round tabling for players based on response
-                if result.response == 'reject':
+                if result.response == REJECT:
                     # Re-match any untabled players. Otherwise, do nothing
                     for i, player in enumerate(players):
                         if not self.state.table_count[player]:
@@ -119,7 +120,7 @@ class ISPT():
 
                 # Offer accepted or countered:
                 else:
-                    if result.response == 'accept':
+                    if result.response == ACCEPT:
                         self.award_points(players, discounts, result.offer)
                         new_discounts = [1, 1]
                     else: # Counteroffer
