@@ -213,6 +213,7 @@ class ISPT():
 
         fig.legend(loc='lower right')
         plt.grid()
+        plt.savefig('data/graphs.png')
         plt.show()
 
     def export_data(self):
