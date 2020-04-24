@@ -112,19 +112,19 @@ class ISPT():
                         if not self.state.table_count[player]:
                             # TODO factor this out into a function?
                             new_opponent = random.choice([j for j in range(self.state.num_players) if j not in players])
-                            new_pair = [player, new_opponent]
+                            new_pair = player, new_opponent
 
                             # Apply discount
-                            new_discounts = [discounts[i] * self.state.discounts[player], 1]
+                            new_discounts = (discounts[i] * self.state.discounts[player], 1)
                             new_tables.append(Table(players=new_pair, game=self, current_discounts=new_discounts))
 
                 # Offer accepted or countered:
                 else:
                     if result.response == ACCEPT:
                         self.award_points(players, discounts, result.offer)
-                        new_discounts = [1, 1]
+                        new_discounts = (1, 1)
                     else: # Counteroffer
-                        new_discounts = [discounts[i] * self.state.discounts[players[i]] for i in range(2)]
+                        new_discounts = (discounts[i] * self.state.discounts[players[i]] for i in range(2))
 
                     # Either case: create table with player roles switched, appropriate discounts
                     new_tables.append(table.switch_players(discounts=new_discounts))
@@ -133,12 +133,17 @@ class ISPT():
             # Update game information
             tables = new_tables
 
+            for table in tables:
+                print("Players:", table.players, "Discounts:", table.discounts)
+
 
             # Update round
             self.state.update_avg_scores()
 
             # Prepare history object
             result_obj = deepcopy(self.state)
+
+            # TODO should 'current discoutns' be a Table object?
             result_obj.current_discounts = {record.players: {'offer': record.offer,
                                                              'response': record.response,
                                                              'discounts': record.discounts}
@@ -349,7 +354,7 @@ class ISPT():
 class Table():
     """Determines structure for a round of actions"""
 
-    def __init__(self, players, game, offerer=False, current_discounts=[1, 1]):
+    def __init__(self, players, game, offerer=False, current_discounts=(1, 1)):
         """Takes two players and runs a round
            If offerer = True, player[0] is offerer
            If offerer = False, shuffle the players and 0th player is offerer
@@ -370,7 +375,7 @@ class Table():
         self.offerer = players[0]
         self.responder = players[1] # TODO If I just make players a named tuple can I ditch these two properties?
         self.players = tuple(players)
-        self.discounts = list(current_discounts)
+        self.discounts = current_discounts
         self.game = game
 
         # Update the game information re this table's discounts
@@ -387,20 +392,18 @@ class Table():
         '''Gets each players' action, decreases the table count (since this table
            will be discarded) and returns the record for game history'''
 
-        # modify agents so they take a table instead of all this junk
         # TODO make offer and response methods somehow private, so agents can't
         offer = self.game.players[self.offerer].offer(self)
         response = self.game.players[self.responder].response(self, offer)
         self.game.decrease_table_count(self.players)
         return self.create_record(offer, response)
 
-        # TODO should discounts be tuples? Do they ever get mutated or just discarded?
-    def switch_players(self, discounts=[1, 1]):
-        discounts.reverse() # We reverse here so when method is called, discounts still match indexing of players
+    def switch_players(self, discounts):
+        discounts_switched = discounts[1], discounts[0]
         return Table(players=[self.responder, self.offerer],
                     game=self.game,
                     offerer=True,
-                    current_discounts=discounts)
+                    current_discounts=discounts_switched)
 
 
 class Agent():
@@ -413,42 +416,26 @@ class Agent():
     For complete information, the Agent must have access to the current
     state of the game as well as the complete history.'''
 
-    def __init__(self, split=0.0, name=None):
-        self.split = split
+class AlwaysAccepts():
+
+    def __init__(self, name):
         self.name = name
+        self.id = None
+        pass
 
-        # CONSIDER: should actions be an enum?
-        self.actions = ['accept', 'counter', 'reject']
-        # TODO make a helper function to ensure unique name strings
-        # memory location of agent can serve as ID?
-        # Needs to determine how to make an offer
+    def offer(self, table):
+        pass
 
-    def offer(self, opponent, state, history, pie):
-            '''What offer to make
-            depending on current state of the Game
-            or anything from the past, in the history object
+    def response(self, table, offer):
+        pass
 
-            1 idea: pass a tuple of game history to test
 
-            this needs to return a proportion
-            '''
 
-            split = self.split
-            # logic for split
-            # if pie > x then split == 0.4
-            # if I had a list of conditions I could iterate over them
-            # and implement an offer strategy
-            # for condition, action in [list passed in]:
-            #   if condition1 then action1; break
-            return split
 
-            # Needs to determine a response
-    def response(self, opponent, offer, state, history, pie):
-                print("Agent's response as been called.")
 
-                # start off by always accepting
-                return self.actions[0]
-                # Given an offer and the history, how would I respond?
+
+
+
 
 def valid_agent(player):
     '''An agent must have the methods .offer and .response,
