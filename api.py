@@ -56,6 +56,10 @@ class ISPT():
             raise ValueError(errmsg)
 
         self.players = players
+
+        self.names = [None] * num_players
+        self.set_player_names(players)
+
         self.state = State(current_discounts = {}, # TODO rename table discounts?
                         discounts = discounts if discounts is not None else [default_discount] * num_players,
                         num_players = num_players,
@@ -69,6 +73,18 @@ class ISPT():
                      )
         self.odd_player = None
         self.history = [deepcopy(self.state)]
+
+    def set_player_names(self, players):
+        ctr = 0 # suffix for unnamed players
+        for i, player in enumerate(players):
+            # Test the agent has a .name attribute and it's a string
+            if hasattr(player, 'name') and isinstance(player.name, str):
+                self.names[i] = player.name if player.name not in self.names else player.name + str(self.names.count(player.name))
+                continue
+            # No name passed in
+            self.names[i] = "player" + str(ctr)
+            ctr += 1
+        return
 
     def award_points(self, players, discounts, offer):
         """ Players = (offerer_index, responder_index)
