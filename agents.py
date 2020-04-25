@@ -2,20 +2,37 @@
 import random
 from constants import *
 
-class AlwaysAccepts():
+class Agent():
+    '''Duck type:
+    an Agent must have an offer method and a response method
+    The offer method must return a number 0 to 1, the proportion of the pie
+    they propose to split.
+    The response method must return one of three strings in the 'actions' list
+    Any logic may be implemented to arrive at these return values.
+    For complete information, the Agent must have access to the current
+    state of the game as well as the complete history.'''
 
-    def __init__(self):
+    def __init__(self, name=None):
+        self.name = name
+        self.id = None
         pass
 
+    def offer(self, table):
+        pass
+
+    def response(self, table, offer):
+        pass
+
+
+class AlwaysAccepts(Agent):
     def offer(self, table):
         return 0.5
 
     def response(self, table, offer):
         return ACCEPT
 
-class AcceptsAnyPositive():
-    def __init__(self):
-            pass
+
+class AcceptsAnyPositive(Agent):
 
     def offer(self, table):
             return 0.5
@@ -23,11 +40,7 @@ class AcceptsAnyPositive():
     def response(self, table, offer):
             return ACCEPT if offer else REJECT
 
-class AlwaysRejects():
-
-    def __init__(self):
-        pass
-
+class AlwaysRejects(Agent):
     def offer(self, table):
         return 0.5
 
@@ -58,8 +71,14 @@ class Hardballer():
     def response(self, table, offer):
         return COUNTER
 
-class TitForTat():
-    def __init__(self, init_offer=0.5):
+class TitForTat(Agent):
+    # def __init__(self, init_offer=0.5):
+    #     self.init_offer = init_offer
+    #     self.last_offer = {}
+    def __init__(self, name=None, init_offer=0.5):
+        super().__init__(name)
+        self.name = name
+        self.id = None
         self.init_offer = init_offer
         self.last_offer = {}
 

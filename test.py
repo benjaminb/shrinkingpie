@@ -9,7 +9,7 @@ from agents import *
 # }
 # agents['j']()
 
-aa = AlwaysAccepts()
+aa = AlwaysAccepts("AlwaysAccepts")
 aap = AcceptsAnyPositive()
 ar = AlwaysRejects()
 h = Hardballer()
@@ -21,6 +21,7 @@ g = GhostofRudin()
 g2 = GhostofRudin()
 m = Mimic()
 dd = DD()
-game = ISPT(players=[ar, ar, ar, ar, ar])
+
+game = ISPT(players=[aa, aa, aap, tt])
 history = game.play(max_rounds=10, export_csv=True)
 # game.graph_scores()
