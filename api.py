@@ -9,6 +9,7 @@ from inspect import signature
 import pprint as pp
 
 # TODO replace offerer & responder with players tuple?
+# TODO is this just a table?
 @dataclass
 class Record:
     offerer: int
@@ -20,7 +21,7 @@ class Record:
 
 @dataclass
 class State:
-    current_discounts: dict # TODO rename table discounts?
+    tables: dict
     discounts: list
     num_players: int
     odd_player: int
@@ -60,7 +61,7 @@ class ISPT():
         self.names = [None] * num_players
         self.set_player_names(players)
 
-        self.state = State(current_discounts = {}, # TODO rename table discounts?
+        self.state = State(tables = {}, # TODO rename table discounts?
                         discounts = discounts if discounts is not None else [default_discount] * num_players,
                         num_players = num_players,
                         odd_player = None,
@@ -111,8 +112,8 @@ class ISPT():
                 players = table.players
                 discounts = table.discounts
 
-                # Remove table discounts from current_discounts game information
-                del self.state.current_discounts[players]
+                # Remove table discounts from tables game information
+                del self.state.tables[players]
 
                 # Check for random noise case
                 if random.random() < response_noise:
@@ -121,9 +122,10 @@ class ISPT():
 
                 results.append(result)
 
-                # Determine scoring and next round tabling for players based on response
+                # Determine scoring and next round tabling
                 if result.response == REJECT:
                     # Re-match any untabled players. Otherwise, do nothing
+                    # TODO should untabled player check happen only at end of round?
                     for i, player in enumerate(players):
                         if not self.state.table_count[player]:
                             # TODO factor this out into a function?
@@ -137,14 +139,14 @@ class ISPT():
                 # Offer accepted or countered:
                 else:
                     if result.response == ACCEPT:
+
                         self.award_points(players, discounts, result.offer)
                         new_discounts = (1, 1)
-                    else: # Counteroffer
-                        new_discounts = (discounts[i] * self.state.discounts[players[i]] for i in range(2))
+                    else: # Counteroffer    note: tuple wrapper needed since Python does not have tuple comprehension
+                        new_discounts = tuple(discounts[i] * self.state.discounts[players[i]] for i in range(2))
 
                     # Either case: create table with player roles switched, appropriate discounts
                     new_tables.append(table.switch_players(discounts=new_discounts))
-
 
             # Update game information
             tables = new_tables
@@ -160,7 +162,7 @@ class ISPT():
             result_obj = deepcopy(self.state)
 
             # TODO should 'current discoutns' be a Table object?
-            result_obj.current_discounts = {record.players: {'offer': record.offer,
+            result_obj.tables = {record.players: {'offer': record.offer,
                                                              'response': record.response,
                                                              'discounts': record.discounts}
                                             for record in results}
@@ -250,8 +252,8 @@ class ISPT():
 
             writer.writeheader()
             for round in self.history:
-                for table in round.current_discounts:
-                    result = round.current_discounts[table]
+                for table in round.tables:
+                    result = round.tables[table]
                     row = {k: result[k] for k in result}
                     row['offerer'], row['responder'] = table
                     row['round'] = round.round
@@ -259,7 +261,7 @@ class ISPT():
 
 
         columns = list(State.__dataclass_fields__.keys())
-        columns.remove('current_discounts')
+        columns.remove('tables')
         with open('data/stats.csv', mode='w') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=columns)
 
@@ -274,25 +276,25 @@ class ISPT():
             players = (record.responder, record.offerer)
             if record.response == 'accept':
                 # THere should be a table with roles reverse and discounts [1, 1]
-                if not players in self.state.current_discounts:
+                if not players in self.state.tables:
                     no_problems = False
                     print("Table resulting from accept not found", players)
                     continue
-                if self.state.current_discounts[players] != [1, 1]:
+                if self.state.tables[players] != [1, 1]:
                     no_problems = False
                     print("result of accept offer did not result in reset discounts", players)
                     continue
 
             if record.response == 'counter':
                 # There should be a table with roles reversed and discounts applied
-                if not players in self.state.current_discounts:
+                if not players in self.state.tables:
                     no_problems = False
                     print("Table resulting from counter not found", players)
                     continue
                 # get them discounts
                 offerer_discount = record.discounts[0] * self.state.discounts[players[1]]
                 responder_discount = record.discounts[1] * self.state.discounts[players[0]]
-                if self.state.current_discounts[players] != [responder_discount, offerer_discount]:
+                if self.state.tables[players] != [responder_discount, offerer_discount]:
                     no_problems = False
                     print("Table resulting from counter has wrong discounts", players)
                     continue
@@ -300,7 +302,7 @@ class ISPT():
             if record.response == 'reject':
                 # There should be a table with this player with discount and 1
                 for i in range(2):
-                    tables = [table for table in self.state.current_discounts if players[i] in table]
+                    tables = [table for table in self.state.tables if players[i] in table]
 
                     if not tables:
                         no_problems = False
@@ -323,7 +325,7 @@ class ISPT():
                     # Else there the player has exactly one table and its discounts are determined
                     the_table = tables[0]
                     p_discount = record.discounts[(i + 1) % 2] * self.state.discounts[players[i]]
-                    if self.state.current_discounts[the_table] not in [[1, p_discount], [p_discount, 1]]:
+                    if self.state.tables[the_table] not in [[1, p_discount], [p_discount, 1]]:
                         no_problems = False
                         print("Didn't find a table with the right discounts for player", players[i])
 
@@ -340,20 +342,20 @@ class ISPT():
             players = (record.responder, record.offerer)
             if record.response in ['counter', 'accept']:
                 # there should be a table with player roles reversed
-                if not players in self.state.current_discounts:
+                if not players in self.state.tables:
                     no_problems = False
                     print("players", players, "don't have a correct table")
 
                 continue
             else:
                 # Make sure the players are not tabled together
-                if players in self.state.current_discounts:
+                if players in self.state.tables:
                     no_problems = False
                     print("response was reject but players", players, "are tabled together")
 
                 # make sure both players have a table
-                p0_table_count = [1 for pair in self.state.current_discounts if players[0] in pair]
-                p1_table_count = [1 for pair in self.state.current_discounts if players[1] in pair]
+                p0_table_count = [1 for pair in self.state.tables if players[0] in pair]
+                p1_table_count = [1 for pair in self.state.tables if players[1] in pair]
 
                 if not p0_table_count:
                     no_problems = False
@@ -395,14 +397,14 @@ class Table():
         self.game = game
 
         # Update the game information re this table's discounts
-        self.game.state.current_discounts[self.players] = self.discounts
+        self.game.state.tables[self.players] = self.discounts
         self.game.increase_table_count(players)
 
     # Is a record just a table with the offer filled in?
     def create_record(self, offer, response):
         return Record(offerer=self.offerer, responder=self.responder,
                         players=self.players, offer=offer, response=response,
-                        discounts=self.game.state.current_discounts[self.players])
+                        discounts=self.game.state.tables[self.players])
 
     def process(self):
         '''Gets each players' action, decreases the table count (since this table
@@ -415,11 +417,8 @@ class Table():
         return self.create_record(offer, response)
 
     def switch_players(self, discounts):
-        discounts_switched = discounts[1], discounts[0]
-        return Table(players=[self.responder, self.offerer],
-                    game=self.game,
-                    offerer=True,
-                    current_discounts=discounts_switched)
+        return Table(players=(self.responder, self.offerer), game=self.game, offerer=True,
+                     current_discounts=(discounts[1], discounts[0]))
 
 
 

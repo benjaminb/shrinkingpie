@@ -22,6 +22,6 @@ g2 = GhostofRudin()
 m = Mimic()
 dd = DD()
 
-game = ISPT(players=[aa, aa, aap, tt])
+game = ISPT(players=[aa, ar, h, tt])
 history = game.play(max_rounds=10, export_csv=True)
 # game.graph_scores()
