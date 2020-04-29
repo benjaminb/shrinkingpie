@@ -83,9 +83,9 @@ class TitForTat(Agent):
         self.last_offer = {}
 
     def offer(self, table):
-        opponent = table.players[1]
-        if opponent in self.last_offer:
-            return self.last_offer[opponent]
+        responder = table.players[1]
+        if responder in self.last_offer:
+            return self.last_offer[responder]
         return self.init_offer
 
     def response(self, table, offer):

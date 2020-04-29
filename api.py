@@ -61,7 +61,7 @@ class ISPT():
         self.names = [None] * num_players
         self.set_player_names(players)
 
-        self.state = State(tables = {}, # TODO rename table discounts?
+        self.state = State(tables = {}, # TODO should this just be a Table object? # this would fix get_past_tables
                         discounts = discounts if discounts is not None else [default_discount] * num_players,
                         num_players = num_players,
                         odd_player = None,
@@ -74,6 +74,25 @@ class ISPT():
                      )
         self.odd_player = None
         self.history = [deepcopy(self.state)]
+
+    # Various getter functions
+    def get_past_offers(self, players):
+        # TODO: implement for single player, then for mutliple players
+        '''players = list of player id's whose offers are desired.
+           Returns a list of dictionaries. List element corresponds to round,'''
+
+        result = []
+        raise NotImplementedError
+
+    def get_past_tables(self, player):
+        return [t for round in self.history for t in round.tables if player in t]
+
+    def get_past_responses(self, player):
+        return [round.tables[t]['response'] for round in self.history for t in round.tables if player == t[1]]
+
+    def get_accepted_offers(self, player):
+        return [round.tables[t]['offer'] for round in self.history for t in round.tables
+                if player == t[1] and round.tables[t]['response'] == ACCEPT]
 
     def set_player_names(self, players):
         ctr = 0 # suffix for unnamed players

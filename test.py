@@ -24,4 +24,6 @@ dd = DD()
 
 game = ISPT(players=[aa, ar, h, tt])
 history = game.play(max_rounds=10, export_csv=True)
+print("method:")
+pp.pprint(game.get_accepted_offers(0))
 # game.graph_scores()
