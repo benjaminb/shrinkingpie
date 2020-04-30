@@ -56,11 +56,10 @@ class ISPT():
             errmsg = "Length of discount list passed in does not equal number of players"
             raise ValueError(errmsg)
 
+        # Todo: write function to check all players have the right attributes
         self.players = players
-
         self.names = [None] * num_players
         self.set_player_names(players)
-
         self.state = State(tables = {}, # TODO should this just be a Table object? # this would fix get_past_tables
                         discounts = discounts if discounts is not None else [default_discount] * num_players,
                         num_players = num_players,
@@ -74,6 +73,9 @@ class ISPT():
                      )
         self.odd_player = None
         self.history = [deepcopy(self.state)]
+
+        for player in players:
+            player.game = self
 
     # Various getter functions
     def get_past_offers(self, players):

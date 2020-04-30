@@ -9,6 +9,7 @@ from agents import *
 # }
 # agents['j']()
 
+ask = Asker()
 aa = AlwaysAccepts("AlwaysAccepts")
 aap = AcceptsAnyPositive()
 ar = AlwaysRejects()
@@ -22,7 +23,7 @@ g2 = GhostofRudin()
 m = Mimic()
 dd = DD()
 
-game = ISPT(players=[aa, ar, h, tt])
+game = ISPT(players=[aa, ar, h, tt, ask])
 history = game.play(max_rounds=10, export_csv=True)
 print("method:")
 pp.pprint(game.get_accepted_offers(0))

@@ -24,6 +24,17 @@ class Agent():
     def response(self, table, offer):
         pass
 
+class Asker(Agent):
+    def offer(self, table):
+        history = self.game.history
+        print("History received:")
+        return 0.5
+
+    def response(self, table, offer):
+        history = self.game.history
+        print("History received:")
+        return ACCEPT
+
 
 class AlwaysAccepts(Agent):
     def offer(self, table):
