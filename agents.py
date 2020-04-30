@@ -15,6 +15,7 @@ class Agent():
     def __init__(self, name=None):
         self.name = name
         self.id = None
+        self.game = None
         pass
 
     def offer(self, table):
@@ -47,7 +48,7 @@ class AlwaysRejects(Agent):
     def response(self, table, offer):
         return REJECT
 
-class AlwaysCounterPrevious():
+class AlwaysCounterPrevious(Agent):
     def __init__(self):
         pass
 
@@ -61,7 +62,7 @@ class AlwaysCounterPrevious():
     def response(self, table, offer):
         return COUNTER
 
-class Hardballer():
+class Hardballer(Agent):
     def __init__(self):
         pass
 
@@ -92,9 +93,10 @@ class TitForTat(Agent):
         self.last_offer[table.players[0]] = offer # Record the offer
         return ACCEPT
 
-class Jonabot():
+class Jonabot(Agent):
     name = 'Jonabot'
-    def __init__(self):
+    def __init__(self, name=None):
+        super().__init__(name)
         self.last_offer = {}
 
     def offer(self, table):
@@ -121,8 +123,9 @@ class Jonabot():
 
         return COUNTER
 
-class GhostofRudin():
-        def __init__(self):
+class GhostofRudin(Agent):
+        def __init__(self, name=None):
+            super().__init__(name)
             self.split = 0.1
 
         def offer(self, table):
@@ -145,11 +148,7 @@ class GhostofRudin():
 
 from statistics import mean
 
-class Mimic():
-
-    def __init__(self):
-        pass
-
+class Mimic(Agent):
     def offer(self, table):
         if table.game.state.round == 1:
             return 0.01
@@ -166,9 +165,6 @@ class Mimic():
         return max(counts, key=counts.get)
 
 class DD():
-    def __init__(self):
-        pass
-
     def offer(self, table):
         # Determine the last offer the opponent accepted, make that offer
         if table.game.state.round == 1:
