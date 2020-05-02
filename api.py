@@ -72,7 +72,7 @@ class ISPT():
                         total_tables = [0] * num_players # total number of tables each player has participated in
                      )
         self.odd_player = None
-        self.history = [deepcopy(self.state)]
+        self.history = []
 
         for player in players:
             player.game = self

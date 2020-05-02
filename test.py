@@ -1,5 +1,6 @@
 from api import *
 from agents import *
+import pprint as pp
 
 # agents = {
 #   'aa': AlwaysAccepts,
@@ -25,6 +26,5 @@ dd = DD()
 
 game = ISPT(players=[aa, ar, h, tt, ask])
 history = game.play(max_rounds=10, export_csv=True)
-print("method:")
-pp.pprint(game.get_accepted_offers(0))
+pp.pprint(history[0])
 # game.graph_scores()
