@@ -8,21 +8,19 @@ from dataclasses import dataclass
 from inspect import signature
 import pprint as pp
 
-# TODO replace offerer & responder with players tuple?
-# TODO is this just a table?
+
 @dataclass
 class Record:
     offerer: int
     responder: int
     players: tuple
     offer: float
-    response: str # TODO make this an enum?
-    discounts: list
+    response: int
+    discounts: tuple
 
 @dataclass
 class State:
     tables: dict
-    discounts: list
     num_players: int
     odd_player: int
     scores: list
@@ -44,7 +42,11 @@ class State:
 
 class ISPT():
     """Structure of the game"""
-
+    # __history = []
+    # __state = None
+    #
+    # @property
+    # def state(cls)
     def __init__(self, players, discounts=None, default_discount=0.9, initial_score=0):
         # Validate input
         num_players = len(players)
@@ -58,10 +60,9 @@ class ISPT():
 
         # Todo: write function to check all players have the right attributes
         self.players = players
-        self.names = [None] * num_players
+        self.names = [None] * num_players # TODO make this a one liner?
         self.set_player_names(players)
         self.state = State(tables = {}, # TODO should this just be a Table object? # this would fix get_past_tables
-                        discounts = discounts if discounts is not None else [default_discount] * num_players,
                         num_players = num_players,
                         odd_player = None,
                         round = 0,
@@ -71,6 +72,7 @@ class ISPT():
                         table_count = [0] * num_players,
                         total_tables = [0] * num_players # total number of tables each player has participated in
                      )
+        self.discounts = discounts if discounts is not None else [default_discount] * num_players
         self.odd_player = None
         self.history = []
 
@@ -154,7 +156,7 @@ class ISPT():
                             new_pair = player, new_opponent
 
                             # Apply discount
-                            new_discounts = (discounts[i] * self.state.discounts[player], 1)
+                            new_discounts = (discounts[i] * self.discounts[player], 1)
                             new_tables.append(Table(players=new_pair, game=self, current_discounts=new_discounts))
 
                 # Offer accepted or countered:
@@ -164,7 +166,7 @@ class ISPT():
                         self.award_points(players, discounts, result.offer)
                         new_discounts = (1, 1)
                     else: # Counteroffer    note: tuple wrapper needed since Python does not have tuple comprehension
-                        new_discounts = tuple(discounts[i] * self.state.discounts[players[i]] for i in range(2))
+                        new_discounts = tuple(discounts[i] * self.discounts[players[i]] for i in range(2))
 
                     # Either case: create table with player roles switched, appropriate discounts
                     new_tables.append(table.switch_players(discounts=new_discounts))
@@ -313,8 +315,8 @@ class ISPT():
                     print("Table resulting from counter not found", players)
                     continue
                 # get them discounts
-                offerer_discount = record.discounts[0] * self.state.discounts[players[1]]
-                responder_discount = record.discounts[1] * self.state.discounts[players[0]]
+                offerer_discount = record.discounts[0] * self.discounts[players[1]]
+                responder_discount = record.discounts[1] * self.discounts[players[0]]
                 if self.state.tables[players] != [responder_discount, offerer_discount]:
                     no_problems = False
                     print("Table resulting from counter has wrong discounts", players)
@@ -345,7 +347,7 @@ class ISPT():
 
                     # Else there the player has exactly one table and its discounts are determined
                     the_table = tables[0]
-                    p_discount = record.discounts[(i + 1) % 2] * self.state.discounts[players[i]]
+                    p_discount = record.discounts[(i + 1) % 2] * self.discounts[players[i]]
                     if self.state.tables[the_table] not in [[1, p_discount], [p_discount, 1]]:
                         no_problems = False
                         print("Didn't find a table with the right discounts for player", players[i])
