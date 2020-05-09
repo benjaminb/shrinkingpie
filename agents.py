@@ -36,6 +36,7 @@ class Asker(Agent):
 
 
 class AlwaysAccepts(Agent):
+    
     def offer(self, table):
         return 0.5
 

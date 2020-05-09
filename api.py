@@ -8,6 +8,11 @@ from dataclasses import dataclass
 from inspect import signature
 import pprint as pp
 
+@dataclass
+class GameConstant:
+    discounts: int
+    names: tuple
+    odd_player: int
 
 @dataclass
 class Record:
@@ -59,9 +64,13 @@ class ISPT():
             raise ValueError(errmsg)
 
         # Todo: write function to check all players have the right attributes
+
+        # Set game constants
         self.players = players
-        self.names = [None] * num_players # TODO make this a one liner?
-        self.set_player_names(players)
+        self.names = self.set_player_names(players)
+        self.discounts = discounts if discounts is not None else [default_discount] * num_players
+        self.odd_player = None
+
         self.state = State(tables = {}, # TODO should this just be a Table object? # this would fix get_past_tables
                         num_players = num_players,
                         odd_player = None,
@@ -72,14 +81,12 @@ class ISPT():
                         table_count = [0] * num_players,
                         total_tables = [0] * num_players # total number of tables each player has participated in
                      )
-        self.discounts = discounts if discounts is not None else [default_discount] * num_players
-        self.odd_player = None
         self.history = []
 
         for player in players:
             player.game = self
 
-    # Various getter functions
+    # Various getters
     def get_past_offers(self, players):
         # TODO: implement for single player, then for mutliple players
         '''players = list of player id's whose offers are desired.
@@ -99,16 +106,21 @@ class ISPT():
                 if player == t[1] and round.tables[t]['response'] == ACCEPT]
 
     def set_player_names(self, players):
+        names = []
         ctr = 0 # suffix for unnamed players
         for i, player in enumerate(players):
             # Test the agent has a .name attribute and it's a string
+            print(players[i].name)
             if hasattr(player, 'name') and isinstance(player.name, str):
-                self.names[i] = player.name if player.name not in self.names else player.name + str(self.names.count(player.name))
+                # self.names[i] = player.name if player.name not in self.names else player.name + str(self.names.count(player.name))
+                name = player.name if player.name not in names else player.name + str(names.count(player.name))
+                names.append(name)
                 continue
             # No name passed in
-            self.names[i] = "player" + str(ctr)
+            names.append("player" + str(ctr))
+            # self.names[i] = "player" + str(ctr)
             ctr += 1
-        return
+        return names
 
     def award_points(self, players, discounts, offer):
         """ Players = (offerer_index, responder_index)
@@ -174,8 +186,8 @@ class ISPT():
             # Update game information
             tables = new_tables
 
-            for table in tables:
-                print("Players:", table.players, "Discounts:", table.discounts)
+            # for table in tables:
+            #     print("Players:", table.players, "Discounts:", table.discounts)
 
 
             # Update round
