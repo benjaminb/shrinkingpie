@@ -28,11 +28,11 @@ class State:
     tables: dict
     num_players: int
     odd_player: int
-    scores: list
-    avg_score_per_round: list
-    avg_score_per_offer: list
-    table_count: list
-    total_tables: list
+    scores: tuple
+    avg_score_per_round: tuple
+    avg_score_per_offer: tuple
+    table_count: tuple
+    cumulative_tables: tuple
     round: int = 1
 
     # TODO implement post init constructor?
@@ -40,10 +40,10 @@ class State:
     #     self.avg_score_per_round = [0] * num_players
     #     self.avg_score_per_offer = [0] * num_players
     #     self.table_count = [0] * num_players
-    #     self.total_tables = [0] * num_players
+    #     self.cumulative_tables = [0] * num_players
     def update_avg_scores(self):
         self.avg_score_per_round = [score / self.round for score in self.scores]
-        self.avg_score_per_offer = [score / tot for (score, tot) in zip(self.scores, self.total_tables)]
+        self.avg_score_per_offer = [score / tot for (score, tot) in zip(self.scores, self.cumulative_tables)]
 
 class ISPT():
     """Structure of the game"""
@@ -75,13 +75,13 @@ class ISPT():
                         num_players = num_players,
                         odd_player = None,
                         round = 0,
-                        scores = [initial_score] * num_players,
-                        avg_score_per_round = [0] * num_players,
-                        avg_score_per_offer = [0] * num_players,
-                        table_count = [0] * num_players,
-                        total_tables = [0] * num_players # total number of tables each player has participated in
+                        scores = (initial_score,) * num_players,
+                        avg_score_per_round = (0,) * num_players,
+                        avg_score_per_offer = (0,) * num_players,
+                        table_count = (0,) * num_players,
+                        cumulative_tables = (0,) * num_players # total number of tables each player has participated in
                      )
-        self.history = []
+        self.history = tuple()
 
         for player in players:
             player.game = self
@@ -125,8 +125,11 @@ class ISPT():
         """ Players = (offerer_index, responder_index)
         """
         splits = (1 - offer, offer)
+        scores = list(self.state.scores)
         for i in range(2):
-            self.state.scores[players[i]] += splits[i] * discounts[i]
+            scores[players[i]] += splits[i] * discounts[i]
+
+        self.state.scores = tuple(scores)
         return
 
     # Play the tournament
@@ -204,7 +207,8 @@ class ISPT():
                                                              'discounts': record.discounts}
                                             for record in results}
 
-            self.history.append(result_obj)
+            self.history = tuple(list(self.history) + [result_obj])
+
 
             # Run checks
             # self.check_tables()
@@ -246,14 +250,22 @@ class ISPT():
         return [Table(players=pair, game=self) for pair in pairs]
 
     def increase_table_count(self, players):
+        table_counts = list(self.state.table_count)
+        cumulative_tables = list(self.state.cumulative_tables)
         for p in players:
-            self.state.table_count[p] += 1
-            self.state.total_tables[p] += 1
+            table_counts[p] += 1
+            cumulative_tables[p] += 1
+
+        self.state.table_count = tuple(table_counts)
+        self.state.cumulative_tables = tuple(cumulative_tables)
         return
 
     def decrease_table_count(self, players):
+        table_counts = list(self.state.table_count)
         for p in players:
-            self.state.table_count[p] -= 1
+            table_counts[p] -= 1
+
+        self.state.table_count = tuple(table_counts)
         return
 
     def graph_scores(self):
