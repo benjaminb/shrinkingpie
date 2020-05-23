@@ -110,7 +110,6 @@ class ISPT():
         ctr = 0 # suffix for unnamed players
         for i, player in enumerate(players):
             # Test the agent has a .name attribute and it's a string
-            print(players[i].name)
             if hasattr(player, 'name') and isinstance(player.name, str):
                 # self.names[i] = player.name if player.name not in self.names else player.name + str(self.names.count(player.name))
                 name = player.name if player.name not in names else player.name + str(names.count(player.name))
@@ -133,6 +132,9 @@ class ISPT():
     # Play the tournament
     def play(self, max_rounds=1000, response_noise=0.01, export_csv=False):
         print("@@@@@@@@@@ THE ISPT @@@@@@@@@@@")
+        print("Players:")
+        for name in self.names:
+            print(name)
 
         tables = self.init_tables()
 

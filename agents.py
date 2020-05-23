@@ -36,7 +36,7 @@ class Asker(Agent):
 
 
 class AlwaysAccepts(Agent):
-    
+
     def offer(self, table):
         return 0.5
 
@@ -74,9 +74,6 @@ class AlwaysCounterPrevious(Agent):
         return COUNTER
 
 class Hardballer(Agent):
-    def __init__(self):
-        pass
-
     def offer(self, table):
         return 0.01
 
@@ -84,9 +81,6 @@ class Hardballer(Agent):
         return COUNTER
 
 class TitForTat(Agent):
-    # def __init__(self, init_offer=0.5):
-    #     self.init_offer = init_offer
-    #     self.last_offer = {}
     def __init__(self, name=None, init_offer=0.5):
         super().__init__(name)
         self.name = name

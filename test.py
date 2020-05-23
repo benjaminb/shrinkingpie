@@ -1,32 +1,28 @@
-from api import *
-from agents import *
+import os
+import sys, inspect
+import importlib
 import pprint as pp
+from api import *
+from agent import Agent
 
-# agents = {
-#   'aa': AlwaysAccepts,
-#   'tt': TitForTat,
-#   'tt10': lambda: TitForTat(0.1),
-#   'j': Jonabot,
-# }
-# agents['j']()
+# Add local path to sys
+sys.path.append(os.getcwd())
+sys.path.append('agents')
 
-ask = Asker()
-aa = AlwaysAccepts("AlwaysAccepts")
-aap = AcceptsAnyPositive()
-ar = AlwaysRejects()
-h = Hardballer()
-tt = TitForTat()
-tt10 = TitForTat(0.1)
-j = Jonabot()
-j1 = Jonabot('j1')
-g = GhostofRudin()
-g2 = GhostofRudin()
-m = Mimic()
-dd = DD()
 
-game = ISPT(players=[aa, aa, ask])
-history = game.play(max_rounds=10, export_csv=True)
-pp.pprint(history[0])
-print('names', game.names)
-print("aa name:", aa.name)
-# game.graph_scores()
+# Import agent modules
+agent_strings = [f[:-3] for f in os.listdir('agents') if f.endswith('.py')]
+for a in agent_strings:
+    importlib.import_module(a)
+
+# Instantiate players
+players = []
+for agent in agent_strings:
+    players += [obj() for name, obj in inspect.getmembers(sys.modules[agent])
+                if inspect.isclass(obj) and name != 'Agent']
+
+# Instantiate game
+game = ISPT(players=players)
+history = game.play(max_rounds=5, export_csv=False)
+pp.pprint(history)
+print(players[0].__class__.__name__)
