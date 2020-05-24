@@ -4,8 +4,6 @@ from constants import *
 class TitForTat(Agent):
     def __init__(self, name=None, init_offer=0.5):
         super().__init__(name)
-        self.name = name
-        self.id = None
         self.init_offer = init_offer
         self.last_offer = {}
 

@@ -58,6 +58,7 @@ class ISPT():
     def __init__(self, players, discounts=None, default_discount=0.9, initial_score=0):
         # Validate input
         num_players = len(players)
+        ISPT.__num_players = len(players)
         if num_players < 3:
             errmsg = "ISPT is defined for 3 or more players only"
             raise ValueError(errmsg)
@@ -106,6 +107,10 @@ class ISPT():
     @classmethod
     def get_state(cls):
         return cls.__state
+
+    @classmethod
+    def num_players(cls):
+        return cls.__num_players
 
     @classmethod
     def get_names(cls):
@@ -304,13 +309,14 @@ class ISPT():
         return
 
     def graph_scores(self):
-        x = range(self.state.round + 1)
+        x = range(ISPT.round())
         fig, axs = plt.subplots(2, 2)
 
-        for i in range(self.state.num_players):
-            a = [rnd.scores[i] for rnd in self.history]
-            b = [rnd.avg_score_per_round[i] for rnd in self.history]
-            c = [rnd.avg_score_per_offer[i] for rnd in self.history]
+        for i in range(ISPT.get_state().num_players):
+            a = [rnd.scores[i] for rnd in ISPT.get_history()]
+            b = [rnd.avg_score_per_round[i] for rnd in ISPT.get_history()]
+            c = [rnd.avg_score_per_offer[i] for rnd in ISPT.get_history()]
+
             axs[0, 0].plot(x, a, label=str(i))
             axs[0, 0].set_title('Score')
             axs[0, 1].plot(x, b)
