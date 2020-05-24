@@ -31,10 +31,11 @@ for agent_str, args in player_data:
 
 # Instantiate game
 game = ISPT(players=players)
-history = game.play(max_rounds=10, export_csv=False)
+history = game.play(max_rounds=10, export_csv=True)
 
 print("FINAL HISTORY in ISPT")
 # pp.pprint(ISPT.get_history())
 
-print(ISPT.get_names())
+game.sb()
+
 # game.graph_scores()

@@ -2,11 +2,17 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+import seaborn as sns
+import numpy as np
+import pandas as pd
+
 from constants import *
 from copy import deepcopy
 from dataclasses import dataclass
 from inspect import signature
 import pprint as pp
+
+sns.set(style='darkgrid')
 
 @dataclass
 class GameConstants:
@@ -308,6 +314,7 @@ class ISPT():
         self.state.table_count = tuple(table_counts)
         return
 
+
     def graph_scores(self):
         x = range(ISPT.round())
         fig, axs = plt.subplots(2, 2)
@@ -325,10 +332,39 @@ class ISPT():
             axs[1, 0].set_title('Average Score per Offer')
             axs[1, 1].axis('off')
 
-        fig.legend(loc='lower right')
+        fig.legend(labels=ISPT.get_names(), loc='lower right')
         plt.grid()
         plt.savefig('data/graphs.png')
+
+
         plt.show()
+
+    def sb(self):
+        fig, axs = plt.subplots(2, 2)
+
+
+        names = ISPT.get_names()
+        history = ISPT.get_history()
+        # TODO figure out how to make these attributes accessed programmatically
+
+        # Total score
+        data = {name: [rnd.scores[names.index(name)] for rnd in history] for name in names}
+        df = pd.DataFrame(data)
+        g1 = sns.lineplot(data=df, dashes = False, ax=axs[0,0])
+
+        data = {name: [rnd.avg_score_per_offer[names.index(name)] for rnd in history] for name in names}
+        df = pd.DataFrame(data)
+        g2 = sns.lineplot(data=df, dashes=False, ax=axs[0,1])
+
+        data = {name: [rnd.avg_score_per_round[names.index(name)] for rnd in history] for name in names}
+        df = pd.DataFrame(data)
+        g3 = sns.lineplot(data=df, dashes = False, ax=axs[1,0])
+
+        fig.legend(labels=ISPT.get_names(), loc='lower right')
+        plt.show()
+
+
+
 
     def export_data(self):
         """export a CSV file for each player where rows are rounds and columns are
