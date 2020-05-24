@@ -9,7 +9,7 @@ from inspect import signature
 import pprint as pp
 
 @dataclass
-class GameConstant:
+class GameConstants:
     discounts: int
     names: tuple
     odd_player: int
@@ -27,7 +27,6 @@ class Record:
 class State:
     tables: dict
     num_players: int
-    odd_player: int
     scores: tuple
     avg_score_per_round: tuple
     avg_score_per_offer: tuple
@@ -47,11 +46,15 @@ class State:
 
 class ISPT():
     """Structure of the game"""
-    # __history = []
-    # __state = None
-    #
-    # @property
-    # def state(cls)
+    __players = None
+    __num_players = None
+    __state = None
+    __history = tuple()
+    __discounts = None
+    __names = None
+    __odd_player = None
+
+
     def __init__(self, players, discounts=None, default_discount=0.9, initial_score=0):
         # Validate input
         num_players = len(players)
@@ -67,13 +70,19 @@ class ISPT():
 
         # Set game constants
         self.players = players
+        ISPT.__players = players
+
         self.names = self.set_player_names(players)
-        self.discounts = discounts if discounts is not None else [default_discount] * num_players
+        ISPT.__names = self.names
+
+        self.discounts = tuple(discounts) if discounts is not None else ((default_discount,) * num_players)
+        ISPT.__discounts = self.discounts
+
         self.odd_player = None
+        ISPT.__odd_player = self.odd_player
 
         self.state = State(tables = {}, # TODO should this just be a Table object? # this would fix get_past_tables
                         num_players = num_players,
-                        odd_player = None,
                         round = 0,
                         scores = (initial_score,) * num_players,
                         avg_score_per_round = (0,) * num_players,
@@ -81,12 +90,39 @@ class ISPT():
                         table_count = (0,) * num_players,
                         cumulative_tables = (0,) * num_players # total number of tables each player has participated in
                      )
+        ISPT.__state = self.state
+
         self.history = tuple()
+        ISPT.history = tuple()
 
         for player in players:
             player.game = self
 
     # Various getters
+    @classmethod
+    def get_history(cls):
+        return cls.__history
+
+    @classmethod
+    def get_state(cls):
+        return cls.__state
+
+    @classmethod
+    def get_names(cls):
+        return cls.__names
+
+    @classmethod
+    def get_discounts(cls):
+        return cls.__discounts
+
+    @classmethod
+    def get_odd_player(cls):
+        return cls.__odd_player
+
+    @classmethod
+    def round(cls):
+        return cls.__state.round
+
     def get_past_offers(self, players):
         # TODO: implement for single player, then for mutliple players
         '''players = list of player id's whose offers are desired.
@@ -109,9 +145,11 @@ class ISPT():
         names = []
         ctr = 0 # suffix for unnamed players
         for i, player in enumerate(players):
-            # Test the agent has a .name attribute and it's a string
+            player.name = player.__class__.__name__ if not player.name else player.name
+
+        for i, player in enumerate(players):
             if hasattr(player, 'name') and isinstance(player.name, str):
-                # self.names[i] = player.name if player.name not in self.names else player.name + str(self.names.count(player.name))
+
                 name = player.name if player.name not in names else player.name + str(names.count(player.name))
                 names.append(name)
                 continue
@@ -122,8 +160,7 @@ class ISPT():
         return names
 
     def award_points(self, players, discounts, offer):
-        """ Players = (offerer_index, responder_index)
-        """
+        """ Players = (offerer_index, responder_index)"""
         splits = (1 - offer, offer)
         scores = list(self.state.scores)
         for i in range(2):
@@ -135,14 +172,11 @@ class ISPT():
     # Play the tournament
     def play(self, max_rounds=1000, response_noise=0.01, export_csv=False):
         print("@@@@@@@@@@ THE ISPT @@@@@@@@@@@")
-        print("Players:")
-        for name in self.names:
-            print(name)
-
         tables = self.init_tables()
 
         while self.state.round < max_rounds:
             results = []; new_tables = []
+
             self.state.round += 1
             while tables:
                 # Play each table & record the results in history
@@ -197,6 +231,7 @@ class ISPT():
 
             # Update round
             self.state.update_avg_scores()
+            ISPT.__state = self.state
 
             # Prepare history object
             result_obj = deepcopy(self.state)
@@ -208,7 +243,7 @@ class ISPT():
                                             for record in results}
 
             self.history = tuple(list(self.history) + [result_obj])
-
+            ISPT.__history = self.history
 
             # Run checks
             # self.check_tables()
@@ -461,6 +496,9 @@ class Table():
 
         # TODO make offer and response methods somehow private, so agents can't
         offer = self.game.players[self.offerer].offer(self)
+        if offer is None:
+            print('none offer from player:')
+            print(self.game.players[self.offerer].__class__.__name__)
         response = self.game.players[self.responder].response(self, offer)
         self.game.decrease_table_count(self.players)
         return self.create_record(offer, response)

@@ -10,19 +10,23 @@ sys.path.append(os.getcwd())
 sys.path.append('agents')
 
 
-# Import agent modules
-agent_strings = [f[:-3] for f in os.listdir('agents') if f.endswith('.py')]
-for a in agent_strings:
-    importlib.import_module(a)
+player_data = [
+                 ['tester', ['t1']],
+                 ['tester', ['tester 0.1', 0.1]],
+                 ['tester', ['t3', 0.2]]
+              ]
 
 # Instantiate players
 players = []
-for agent in agent_strings:
-    players += [obj() for name, obj in inspect.getmembers(sys.modules[agent])
-                if inspect.isclass(obj) and name != 'Agent']
+for agent_str, args in player_data:
+    importlib.import_module(agent_str)
+    players += [obj(*args) for name, obj in inspect.getmembers(sys.modules[agent_str])
+                    if name.lower() == agent_str and name != 'Agent']
+
 
 # Instantiate game
 game = ISPT(players=players)
-history = game.play(max_rounds=5, export_csv=False)
-pp.pprint(history)
-print(players[0].__class__.__name__)
+history = game.play(max_rounds=10, export_csv=False)
+
+print("FINAL HISTORY in ISPT")
+pp.pprint(ISPT.get_history())
