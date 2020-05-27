@@ -5,6 +5,8 @@ import random
 import seaborn as sns
 import numpy as np
 import pandas as pd
+from matplotlib_chord import chordDiagram
+
 
 from constants import *
 from copy import deepcopy
@@ -348,22 +350,80 @@ class ISPT():
         # TODO figure out how to make these attributes accessed programmatically
 
         # Total score
+        plots = []
         data = {name: [rnd.scores[names.index(name)] for rnd in history] for name in names}
         df = pd.DataFrame(data)
-        g1 = sns.lineplot(data=df, dashes = False, ax=axs[0,0])
+        plots += [sns.lineplot(data=df, dashes = False, ax=axs[0,0])]
+        # g1.get_legend().remove()
 
         data = {name: [rnd.avg_score_per_offer[names.index(name)] for rnd in history] for name in names}
         df = pd.DataFrame(data)
-        g2 = sns.lineplot(data=df, dashes=False, ax=axs[0,1])
+        plots += [sns.lineplot(data=df, dashes=False, ax=axs[0,1])]
 
         data = {name: [rnd.avg_score_per_round[names.index(name)] for rnd in history] for name in names}
         df = pd.DataFrame(data)
-        g3 = sns.lineplot(data=df, dashes = False, ax=axs[1,0])
+        plots += [sns.lineplot(data=df, dashes = False, ax=axs[1,0])]
 
+        for plot in plots:
+            plot.get_legend().remove()
+
+        axs[1, 1].axis('off')
         fig.legend(labels=ISPT.get_names(), loc='lower right')
         plt.show()
 
+    def chord_chart(self, save=False):
+        fig = plt.figure(figsize=(6,6))
 
+        # Define the flux
+        # For each round
+            # Create symmetric matrix of points awarded
+
+        flux = np.array([[11975,  5871, 8916, 2868],
+          [ 1951, 10048, 2060, 6171],
+          [ 8010, 16145, 8090, 8045],
+          [ 1013,   990,  940, 6907]
+        ])
+
+        last_round = ISPT.get_history()[-1]
+        num_players = ISPT.num_players()
+        f = np.zeros((num_players, num_players))
+        print(f)
+        for i in range(ISPT.num_players()):
+            for j in range(ISPT.num_players()):
+                if (i, j) in last_round.tables:
+                    print(last_round.tables[(i, j)])
+                    if last_round.tables[(i, j)]['response'] == ACCEPT:
+                        print('found:', i, j)
+                        print('offer accepted:', last_round.tables[(i, j)])
+                        offer = last_round.tables[(i, j)]['offer']
+                        f[(i, j)] = 1 - offer
+                        f[(j, i)] = offer
+                    else:
+                        f[(i, j)] = 0
+                        f[(j, i)] = 0
+                # if a table existed between player i and j, and offer was accept
+                # val is the score each one got
+        print(f)
+
+        ax = plt.axes([0,0,1,1])
+
+        # make chord width a function of points earned
+
+        nodePos = chordDiagram(f, ax)
+        ax.axis('off')
+        prop = dict(fontsize=16*0.8, ha='center', va='center')
+
+        # make this the names of the players
+        nodes = ISPT.get_names()
+        for i in range(4):
+            ax.text(nodePos[i][0], nodePos[i][1], nodes[i], rotation=nodePos[i][2], **prop)
+
+        plt.show()
+
+        if save:
+            plt.savefig("example.png", dpi=600,
+                    transparent=True,
+                    bbox_inches='tight', pad_inches=0.02)
 
 
     def export_data(self):

@@ -4,6 +4,8 @@ import importlib
 import pprint as pp
 from api import *
 from agent import Agent
+from matplotlib_chord import chordDiagram
+import numpy as np
 
 # Add local path to sys
 sys.path.append(os.getcwd())
@@ -17,7 +19,9 @@ player_data = [
                  ['titfortat', ['tft']],
                  ['titfortat', ['tft01', 0.01]],
                  ['jonabot', []],
-                 ['ghostofrudin', ['gor']]
+                 ['ghostofrudin', ['gor']],
+                 ['alwaysRejects', ['ar1']],
+                 ['alwaysRejects', ['ar2']]
               ]
 
 # Instantiate players
@@ -31,7 +35,7 @@ for agent_str, args in player_data:
 
 # Instantiate game
 game = ISPT(players=players)
-history = game.play(max_rounds=10, export_csv=True)
+history = game.play(max_rounds=10, export_csv=False)
 
 print("FINAL HISTORY in ISPT")
 # pp.pprint(ISPT.get_history())
@@ -39,3 +43,4 @@ print("FINAL HISTORY in ISPT")
 game.sb()
 
 # game.graph_scores()
+# game.chord_chart()
