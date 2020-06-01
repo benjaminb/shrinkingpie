@@ -33,6 +33,7 @@ The game currently defines these parameters:
 -Length of game: The number of rounds are specified any integer 1 or greater. The default length is 1000 rounds. Future versions of the game will support a random termination parameter.
 -Discount parameter: A discount parameter is specified for each player, any real number between 0 and 1. Players could all have the same discount parameter or players can individually have different discounts assigned.
 -Information: the players have complete information. That is they are aware of all the actions that all players have taken in previous rounds. Additionally, they are aware of all discount factors, scores, and other game statistics. Future versions of the game will support restricting the information available to players.
+-Maximum tables: in the basic version of the game, there is no limit on how many tables a player can participate in simultaneously, and no limit on how many offers they can make or accept. However, we may want to restrict a player to being able to make or accept one offer per round. This may more closely model negotiations over a finite opportunity. For example, a laborer in the workforce can take on one full time job at a time, so they can only accept one offer per time period and all else being equal, would rationally accept the highest offer. In this variation, offerers can make a maximum of one nonzero offer per round, and responders accept the highest nonzero offer, rejecting all others.
 
 ### Game Statistics:
 

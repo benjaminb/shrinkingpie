@@ -14,14 +14,17 @@ sys.path.append(os.getcwd())
 player_data = [
                  ['tester', ['t1']],
                  ['tester', ['tester 0.1', 0.1]],
-                 ['tester', ['t3', 0.2]],
-                 ['mimic', ['mimic']],
-                 ['titfortat', ['tft']],
-                 ['titfortat', ['tft01', 0.01]],
-                 ['jonabot', []],
-                 ['ghostofrudin', ['gor']],
+                 # ['tester', ['t3', 0.2]],
+                 # ['mimic', ['mimic']],
+                 # ['titfortat', ['tft']],
+                 # ['titfortat', ['tft01', 0.01]],
+                 # ['jonabot', []],
+                 # ['ghostofrudin', ['gor']],
                  ['alwaysRejects', ['ar1']],
-                 ['alwaysRejects', ['ar2']]
+                 # ['alwaysRejects', ['ar2']],
+                 ['dd', ['dd']],
+                 ['dd', ['dd2']],
+                 ['dd', ['dd3']]
               ]
 
 # Instantiate players
@@ -35,12 +38,13 @@ for agent_str, args in player_data:
 
 # Instantiate game
 game = ISPT(players=players)
-history = game.play(max_rounds=10, export_csv=False)
+history = game.play(max_rounds=5, export_csv=True)
 
-print("FINAL HISTORY in ISPT")
+results = ISPT.get_history([0, 1])
+print(results)
 # pp.pprint(ISPT.get_history())
 
-game.sb()
+# game.sb()
 
 # game.graph_scores()
 # game.chord_chart()
