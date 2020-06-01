@@ -219,8 +219,8 @@ class ISPT():
                 result = table.process()
 
                 # TODO Get all this out of the return value in result instead?
-                players = table.players
-                discounts = table.discounts
+                players = result.players
+                discounts = result.discounts
 
                 # Check for random noise case
                 # TODO factor this out?
@@ -407,14 +407,7 @@ class Table():
     """Determines structure for a round of actions"""
 
     def __init__(self, players, game, offerer=False, current_discounts=(1, 1)):
-        """Takes two players and runs a round
-           If offerer = True, player[0] is offerer
-           If offerer = False, shuffle the players and 0th player is offerer
-
-           players is list of indices of players in game.players
-
-           offerer = index of players which is the player
-        """
+        """    """
 
         # Get the offerer and responder
         # TODO does this still work if players is a tuple? If so, make it a tuple everywhere Table() is instantiated
@@ -423,24 +416,13 @@ class Table():
             random.shuffle(p)
             players, current_discounts = zip(*p)
 
-        # Set agent class instances and indices
-        self.offerer = players[0]
-        self.responder = players[1] # TODO If I just make players a named tuple can I ditch these two properties?
-        self.players = tuple(players)
-        self.discounts = current_discounts
-
         self.data = Record(offerer = players[0],
                            responder = players[1],
                            players = tuple(players),
                            offer = None,
                            response = None,
-                           discounts = current_discounts
-                           )
+                           discounts = current_discounts)
         self.game = game
-
-        # TODO move this back into the game object
-        # Update the game information re this table's discounts
-        # self.game.state.tables[self.players] = self.discounts
         self.game.increase_table_count(players)
 
     # Is a record just a table with the offer filled in?
@@ -452,18 +434,17 @@ class Table():
            will be discarded) and returns the record for game history'''
 
         # TODO make offer and response methods somehow private, so agents can't
-        # offer = self.game.players[self.offerer].offer(self)
-        offer = self.game.players[self.offerer].offer(self)
+        offer = self.game.players[self.data.offerer].offer(self.data)
         if offer is None:
             print('none offer from player:')
             print(self.game.players[self.offerer].__class__.__name__)
-        # response = self.game.players[self.responder].response(self, offer)
         self.data.offer = offer
-        self.data.response = self.game.players[self.responder].response(self, offer)
-        self.game.decrease_table_count(self.players)
-        # return self.create_record(offer, response)
+        self.data.response = self.game.players[self.data.responder].response(self.data, offer)
+        self.game.decrease_table_count(self.data.players)
         return self.data
 
     def switch_players(self, discounts):
-        return Table(players=(self.responder, self.offerer), game=self.game, offerer=True,
+        return Table(players=(self.data.responder, self.data.offerer),
+                     game=self.game,
+                     offerer=True,
                      current_discounts=(discounts[1], discounts[0]))
