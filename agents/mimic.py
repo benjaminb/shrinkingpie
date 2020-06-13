@@ -9,7 +9,7 @@ class Mimic(Agent):
             return 0.01
 
         last_round = ISPT.get_history()[-1]
-        return mean([t['offer'] for t in last_round.tables.values()])
+        return mean([t.offer for t in last_round.tables])
 
 
     def response(self, table, offer):
@@ -17,7 +17,7 @@ class Mimic(Agent):
             return ACCEPT
 
         last_round = ISPT.get_history()[-1].tables
-        responses = [t['response'] for t in last_round.values()]
+        responses = [t.response for t in last_round]
         counts = {ACCEPT: responses.count(ACCEPT),
                   REJECT: responses.count(REJECT),
                   COUNTER: responses.count(COUNTER)}

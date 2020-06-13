@@ -1,9 +1,9 @@
 import csv
+import inspect
 import numpy as np
 import matplotlib.pyplot as plt
 import random
 import seaborn as sns
-import numpy as np
 import pandas as pd
 from matplotlib_chord import chordDiagram
 
@@ -37,6 +37,7 @@ class Record:
                 'offer': self.offer,
                 'response': self.response,
                 'discounts': self.discounts}
+
 @dataclass
 class State:
     tables: dict
@@ -68,7 +69,8 @@ class ISPT():
     __names = None
     __odd_player = None
 
-    def __init__(self, players, discounts=None, default_discount=0.9, initial_score=0):
+    def __init__(self, players, discounts=None, default_discount=0.9, info_availability=None, initial_score=0):
+        '''info_availability: a list of lists representing which players' information is available to which players'''
         # Validate input
         num_players = len(players)
         ISPT.__num_players = len(players)
@@ -95,6 +97,9 @@ class ISPT():
         self.odd_player = None
         ISPT.__odd_player = self.odd_player
 
+        self.info_availability = info_availability
+        ISPT.__info_availability = info_availability
+
         self.state = State(tables = {}, # TODO should this just be a Table object? # this would fix get_past_tables
                         num_players = num_players,
                         round = 0,
@@ -115,18 +120,43 @@ class ISPT():
     # Various getters
     @classmethod
     def get_history(cls, players=[]):
-        if not players:
-            return cls.__history
+        '''Returns a list of lists, the index of the parent list corresponds to the
+           rounds of the game, then the child lists are the tables in which the
+           specified players participated'''
+        if not cls.__info_availability:
+            # Return complete history
+            if not players:
+                return cls.__history
 
-        results = []
-        for round in cls.__history:
-            results.append([t for t in round.tables if t.offerer in players or t.responder in players])
+            # Return history of requested players only
+            results = []
+            for round in cls.__history:
+                results.append([t for t in round.tables if t.offerer in players or t.responder in players])
+            return results
 
-        return results
+        # Restricted information: get the index of the requester
+        # frame = inspect.stack()[1].frame   # The frame of the caller.
+        # instance = frame.f_locals['self']          # The caller's locals dict.
+        # requester = ISPT.__players.index(instance)
+        # info_avail = ISPT.__info_availability[requester]
+        #
+        # results = []
+        # for round in cls.__history:
+        #     results.append([t for t in round.tables if t.offerer in info_avail or t.responder in info_avail])
+
 
     @classmethod
     def get_state(cls):
         return cls.__state
+
+    @classmethod
+    def get_rankings(cls, stat='score'):
+        stat_dict = {'score': ISPT.__state.scores,
+                     'avg_score_per_round': ISPT.__state.avg_score_per_round,
+                     'avg_score_per_offer': ISPT.__state.avg_score_per_offer}
+        rankings = list(range(ISPT.num_players()))
+        rankings.sort(key = lambda x: stat_dict[stat][x], reverse=True)
+        return rankings
 
     @classmethod
     def num_players(cls):
@@ -203,7 +233,13 @@ class ISPT():
         return
 
     # Play the tournament
-    def play(self, max_rounds=1000, response_noise=0.01, export_csv=False):
+    def play(self, max_rounds=1000, termination_prob=(100, 0.01), response_noise=0.01, export_csv=False):
+        '''termination_prob = (round, probability): each round after the round
+            given in this tuple, the game randomly terminates with the given
+            probability. Note that after max_rounds, the game terminates regardless.
+
+        '''
+
         print("@@@@@@@@@@ THE ISPT @@@@@@@@@@@")
 
         tables = self.init_tables()
@@ -212,6 +248,10 @@ class ISPT():
         while self.state.round < max_rounds:
             results = []; new_tables = []
             self.state.round += 1
+
+            # Test for random termination
+            if self.state.round > termination_prob[0] and random.random() < termination_prob[1]:
+                break
 
             while tables:
                 # Play each table & record the results in history
@@ -226,7 +266,7 @@ class ISPT():
                 # TODO factor this out?
                 if random.random() < response_noise:
                     false_responses = {0, 1, 2} - {result.response}
-                    result.response = random.choice(list(false_responses))
+                    result.response = random.choice(tuple(false_responses))
 
                 results.append(result)
 
@@ -326,9 +366,9 @@ class ISPT():
         fig, axs = plt.subplots(2, 2)
 
         for i in range(ISPT.get_state().num_players):
-            a = [rnd.scores[i] for rnd in ISPT.get_history()]
-            b = [rnd.avg_score_per_round[i] for rnd in ISPT.get_history()]
-            c = [rnd.avg_score_per_offer[i] for rnd in ISPT.get_history()]
+            a = [rnd.scores[i] for rnd in ISPT.__history]
+            b = [rnd.avg_score_per_round[i] for rnd in ISPT.__history]
+            c = [rnd.avg_score_per_offer[i] for rnd in ISPT.__history]
 
             axs[0, 0].plot(x, a, label=str(i))
             axs[0, 0].set_title('Score')
@@ -350,7 +390,7 @@ class ISPT():
 
 
         names = ISPT.get_names()
-        history = ISPT.get_history()
+        history = ISPT.__history
         # TODO figure out how to make these attributes accessed programmatically
 
         # Total score
