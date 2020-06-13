@@ -23,7 +23,7 @@ class GameConstants:
     odd_player: int
 
 @dataclass
-class Record:
+class TableRecord:
     offerer: int
     responder: int
     players: tuple
@@ -40,7 +40,7 @@ class Record:
 
 @dataclass
 class State:
-    tables: dict
+    tables: tuple
     num_players: int
     scores: tuple
     avg_score_per_round: tuple
@@ -123,27 +123,25 @@ class ISPT():
         '''Returns a list of lists, the index of the parent list corresponds to the
            rounds of the game, then the child lists are the tables in which the
            specified players participated'''
-        if not cls.__info_availability:
-            # Return complete history
-            if not players:
-                return cls.__history
 
-            # Return history of requested players only
-            results = []
-            for round in cls.__history:
-                results.append([t for t in round.tables if t.offerer in players or t.responder in players])
-            return results
+        # Get set of players' history requested
+        all_players = set(range(ISPT.__num_players))
+        players_requested = set(players) if players else all_players
 
-        # Restricted information: get the index of the requester
-        # frame = inspect.stack()[1].frame   # The frame of the caller.
-        # instance = frame.f_locals['self']          # The caller's locals dict.
-        # requester = ISPT.__players.index(instance)
-        # info_avail = ISPT.__info_availability[requester]
-        #
-        # results = []
-        # for round in cls.__history:
-        #     results.append([t for t in round.tables if t.offerer in info_avail or t.responder in info_avail])
+        # TODO: If game played with complete information then a lot of this is unnecessary
+        #TODO factor this out
+        # Get the index of the requester
+        frame = inspect.stack()[1].frame    # The frame of the caller.
+        instance = frame.f_locals['self']   # The caller's locals dict.
+        requester = ISPT.__players.index(instance)
 
+        # Remove from players list any players the requester doesn't have access to
+        allowed = set(ISPT.__info_availability.get(requester, all_players))
+        players = players_requested.intersection(allowed)
+        results = []
+        for round in cls.__history:
+            results.append([t for t in round.tables if t.offerer in players or t.responder in players])
+        return results
 
     @classmethod
     def get_state(cls):
@@ -180,7 +178,7 @@ class ISPT():
 
     def get_past_offers(self, player):
         '''Player = id of player whose past offers we want to get
-           Returns a list of lists, corresponding to the records in which
+           Returns a list of lists, corresponding to the TableRecords in which
            the player was an offerer in each round'''
 
         results = []
@@ -456,7 +454,7 @@ class Table():
             random.shuffle(p)
             players, current_discounts = zip(*p)
 
-        self.data = Record(offerer = players[0],
+        self.data = TableRecord(offerer = players[0],
                            responder = players[1],
                            players = tuple(players),
                            offer = None,

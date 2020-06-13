@@ -20,7 +20,8 @@ class DD(Agent):
             return ACCEPT
 
         # If current offer better than last round's average, accept
-        avg_offer = mean([t.offer for t in ISPT.get_history()[-1].tables])
+        offers = [t.offer for t in ISPT.get_history()[-1]]
+        avg_offer = mean(offers) if offers else 0
         return ACCEPT if avg_offer <= offer else REJECT
 
     def last_accepted(self, player):
@@ -28,8 +29,8 @@ class DD(Agent):
 
         history = ISPT.get_history()
         for i in reversed(range(len(history))):
-            tables = history[i].tables
-            for t in tables:
-                if t.players[1] == player and t.response == ACCEPT:
-                    return t.offer
+            if history[i]:      # Check that the round isn't an empty list
+                for t in history[i]:
+                    if t.players[1] == player and t.response == ACCEPT:
+                        return t.offer
         return None
