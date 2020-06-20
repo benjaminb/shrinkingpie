@@ -6,8 +6,6 @@ import random
 import seaborn as sns
 import pandas as pd
 from matplotlib_chord import chordDiagram
-
-
 from constants import *
 from copy import deepcopy
 from dataclasses import dataclass
@@ -56,12 +54,16 @@ class State:
     #     self.table_count = [0] * num_players
     #     self.cumulative_tables = [0] * num_players
     def update_avg_scores(self):
-        self.avg_score_per_round = [score / self.round for score in self.scores]
-        self.avg_score_per_offer = [score / tot for (score, tot) in zip(self.scores, self.cumulative_tables)]
+        self.avg_score_per_round = tuple([score / self.round for score in self.scores])
+        self.avg_score_per_offer = tuple([score / tot for (score, tot) in zip(self.scores, self.cumulative_tables)])
 
 class ISPT():
-    """Structure of the game"""
-    __players = None
+    """Structure of the game
+       Data that should be available to agents is stored as class attributes and
+       accessed via getters. Data that should never be accessed by agents is
+       stored in the instance. This way, agents can call ISPT.some_getter()
+       without 'knowing' where the game instance is.
+    """
     __num_players = None
     __state = None
     __history = tuple()
@@ -83,24 +85,13 @@ class ISPT():
             raise ValueError(errmsg)
 
         # Todo: write function to check all players have the right attributes
-
         # Set game constants
         self.players = players
-        ISPT.__players = players
-
-        self.names = self.set_player_names(players)
-        ISPT.__names = self.names
-
-        self.discounts = tuple(discounts) if discounts is not None else ((default_discount,) * num_players)
-        ISPT.__discounts = self.discounts
-
-        self.odd_player = None
-        ISPT.__odd_player = self.odd_player
-
-        self.info_availability = info_availability
+        ISPT.__names = self.set_player_names(players)
+        ISPT.__discounts = tuple(discounts) if discounts is not None else ((default_discount,) * num_players)
+        ISPT.__odd_player = None
         ISPT.__info_availability = info_availability
-
-        self.state = State(tables = {}, # TODO should this just be a Table object? # this would fix get_past_tables
+        ISPT.__state = State(tables = {}, # TODO should this just be a Table object? # this would fix get_past_tables
                         num_players = num_players,
                         round = 0,
                         scores = (initial_score,) * num_players,
@@ -109,18 +100,14 @@ class ISPT():
                         table_count = (0,) * num_players,
                         cumulative_tables = (0,) * num_players # total number of tables each player has participated in
                      )
-        ISPT.__state = self.state
-
-        self.history = tuple()
         ISPT.history = tuple()
-
-        for player in players:
-            player.game = self
 
     # Various getters
     @classmethod
-    def get_history(cls, players=[]):
-        '''Returns a list of lists, the index of the parent list corresponds to the
+    def get_history(self, players=[]):
+        '''History getter for agents.
+
+           Returns a list of lists, the index of the parent list corresponds to the
            rounds of the game, then the child lists are the tables in which the
            specified players participated'''
 
@@ -133,13 +120,13 @@ class ISPT():
         # Get the index of the requester
         frame = inspect.stack()[1].frame    # The frame of the caller.
         instance = frame.f_locals['self']   # The caller's locals dict.
-        requester = ISPT.__players.index(instance)
+        requester = self.players.index(instance)
 
         # Remove from players list any players the requester doesn't have access to
         allowed = set(ISPT.__info_availability.get(requester, all_players))
         players = players_requested.intersection(allowed)
         results = []
-        for round in cls.__history:
+        for round in ISPT.__history:
             results.append([t for t in round.tables if t.offerer in players or t.responder in players])
         return results
 
@@ -223,11 +210,11 @@ class ISPT():
     def award_points(self, players, discounts, offer):
         """ Players = (offerer_index, responder_index)"""
         splits = (1 - offer, offer)
-        scores = list(self.state.scores)
+        scores = list(ISPT.__state.scores)
         for i in range(2):
             scores[players[i]] += splits[i] * discounts[i]
 
-        self.state.scores = tuple(scores)
+        ISPT.__state.scores = tuple(scores)
         return
 
     # Play the tournament
@@ -241,15 +228,17 @@ class ISPT():
         print("@@@@@@@@@@ THE ISPT @@@@@@@@@@@")
 
         tables = self.init_tables()
-        self.state.tables = tuple([t.data for t in tables])
+        ISPT.__state.tables = tuple([t.record for t in tables])
 
-        while self.state.round < max_rounds:
+        while ISPT.__state.round < max_rounds:
             results = []; new_tables = []
-            self.state.round += 1
+            ISPT.__state.round += 1
 
             # Test for random termination
-            if self.state.round > termination_prob[0] and random.random() < termination_prob[1]:
+            # TODO come up with better name for random termination params
+            if ISPT.__state.round > termination_prob[0] and random.random() < termination_prob[1]:
                 break
+
 
             while tables:
                 # Play each table & record the results in history
@@ -273,13 +262,14 @@ class ISPT():
                     # Re-match any untabled players. Otherwise, do nothing
                     # TODO should untabled player check happen only at end of round?
                     for i, player in enumerate(players):
-                        if not self.state.table_count[player]:
+                        if not ISPT.__state.table_count[player]:
+
                             # TODO factor this out into a function?
-                            new_opponent = random.choice([j for j in range(self.state.num_players) if j not in players])
+                            new_opponent = random.choice([j for j in range(ISPT.__state.num_players) if j not in players])
                             new_pair = player, new_opponent
 
                             # Apply discount
-                            new_discounts = (discounts[i] * self.discounts[player], 1)
+                            new_discounts = (discounts[i] * ISPT.__discounts[player], 1)
                             new_tables.append(Table(players=new_pair, game=self, current_discounts=new_discounts))
 
                 # Offer accepted or countered:
@@ -288,7 +278,7 @@ class ISPT():
                         self.award_points(players, discounts, result.offer)
                         new_discounts = (1, 1)
                     else: # Counteroffer    note: tuple wrapper needed since Python does not have tuple comprehension
-                        new_discounts = tuple(discounts[i] * self.discounts[players[i]] for i in range(2))
+                        new_discounts = tuple(discounts[i] * ISPT.__discounts[players[i]] for i in range(2))
 
                     # Either case: create table with player roles switched, appropriate discounts
                     new_tables.append(table.switch_players(discounts=new_discounts))
@@ -297,31 +287,29 @@ class ISPT():
             tables = new_tables
 
             # Update round
-            self.state.update_avg_scores()
-            ISPT.__state = self.state
+            ISPT.__state.update_avg_scores()
 
             # Prepare history object
-            result_obj = deepcopy(self.state)
+            # result_obj = deepcopy(self.state)
+            result_obj = deepcopy(ISPT.__state) # Is this line necessary?
             result_obj.tables = tuple(results)
-
-            self.history = tuple(list(self.history) + [result_obj])
-            ISPT.__history = self.history
+            ISPT.__history = tuple(list(ISPT.__history) + [result_obj])
             # End of round
 
         if export_csv:
             self.export_data()
 
-        return self.history
+        return ISPT.__history
 
     def init_tables(self):
         pairs = []
-        indices = {i for i in range(self.state.num_players)}
+        indices = {i for i in range(ISPT.__state.num_players)}
 
         # If we have an odd number of players
-        if self.state.num_players % 2:
+        if ISPT.__state.num_players % 2:
             # Create a second table with a randomly chosen player
             pair = random.sample(indices, 2)
-            self.state.odd_player = pair[1]
+            ISTP.__odd_player = pair[1]
             indices -= {pair[0]}
             pairs.append(pair)
 
@@ -431,14 +419,28 @@ class ISPT():
                     row['round'] = round.round
                     writer.writerow(row)
 
-        columns = list(State.__dataclass_fields__.keys())
-        columns.remove('tables')
-        with open('data/stats.csv', mode='w') as csv_file:
-            writer = csv.DictWriter(csv_file, fieldnames=columns)
+        # score_strings = ['score', 'avg_per_offer', 'avg_per_round', 'table_count', 'cumulative_tables']
+        score_attrs = ['scores', 'avg_score_per_offer', 'avg_score_per_round', 'table_count', 'cumulative_tables']
+        score_headers = [name + '_' + s for s in score_attrs for name in ISPT.__names]
+        other_stats = ['num_players', 'round']
+        column_names = other_stats + score_headers
 
+
+        with open('data/stats.csv', mode='w') as csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=column_names)
             writer.writeheader()
-            for round in self.history:
-                writer.writerow({col: round.__dict__[col] for col in columns})
+
+            # for round in self.history:
+            for round in ISPT.__history:
+                row = {'num_players': round.num_players,
+                       'round': round.round}
+
+                # Get the score tuples from round and place into row dict
+                score_tuples = [getattr(round, attr) for attr in score_attrs]
+                scores = [value for score in score_tuples for value in score]
+                for col, score in zip(score_headers, scores):
+                    row[col] = score
+                writer.writerow(row)
 
 
 class Table():
@@ -446,7 +448,6 @@ class Table():
 
     def __init__(self, players, game, offerer=False, current_discounts=(1, 1)):
         """    """
-
         # Get the offerer and responder
         # TODO does this still work if players is a tuple? If so, make it a tuple everywhere Table() is instantiated
         if not offerer:
@@ -454,7 +455,7 @@ class Table():
             random.shuffle(p)
             players, current_discounts = zip(*p)
 
-        self.data = TableRecord(offerer = players[0],
+        self.record = TableRecord(offerer = players[0],
                            responder = players[1],
                            players = tuple(players),
                            offer = None,
@@ -463,26 +464,22 @@ class Table():
         self.game = game
         self.game.increase_table_count(players)
 
-    # Is a record just a table with the offer filled in?
-    def create_record(self, offer, response):
-        return self.data
-
     def process(self):
         '''Gets each players' action, decreases the table count (since this table
            will be discarded) and returns the record for game history'''
 
-        # TODO make offer and response methods somehow private, so agents can't
-        offer = self.game.players[self.data.offerer].offer(self.data)
+        offer = self.game.players[self.record.offerer].offer(self.record)
         if offer is None:
             print('none offer from player:')
             print(self.game.players[self.offerer].__class__.__name__)
-        self.data.offer = offer
-        self.data.response = self.game.players[self.data.responder].response(self.data, offer)
-        self.game.decrease_table_count(self.data.players)
-        return self.data
+        self.record.offer = offer
+        self.record.response = self.game.players[self.record.responder].response(self.record, offer)
+        self.game.decrease_table_count(self.record.players)
+
+        return self.record
 
     def switch_players(self, discounts):
-        return Table(players=(self.data.responder, self.data.offerer),
+        return Table(players=(self.record.responder, self.record.offerer),
                      game=self.game,
                      offerer=True,
                      current_discounts=(discounts[1], discounts[0]))
