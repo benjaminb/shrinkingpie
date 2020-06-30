@@ -1,3 +1,6 @@
+from constants import *
+
+
 class Agent():
     '''Duck type:
     an Agent must have an offer method and a response method
@@ -9,10 +12,11 @@ class Agent():
     state of the game as well as the complete history.'''
 
     def __init__(self, name=None):
+        if not name:
+            print("instantiating name")
         self.name = name
         self.id = None
         self.game = None
-        pass
 
     def offer(self, table):
         pass

@@ -4,8 +4,6 @@ import importlib
 import pprint as pp
 from api import *
 from agent import Agent
-from matplotlib_chord import chordDiagram
-import numpy as np
 
 # Add local path to sys
 sys.path.append(os.getcwd())
@@ -41,7 +39,7 @@ for agent_str, args in player_data:
 # Instantiate game
 print("Players:", players)
 game = ISPT(players=players, info_availability={0: [0, 1]})
-history = game.play(max_rounds=100, termination_prob=(100, 0), export_csv=True)
+history = game.play(max_rounds=10, termination_prob=(100, 0), export_csv=True)
 game.heatmap()
 
 # results = ISPT.get_history()

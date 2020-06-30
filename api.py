@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import random
 import seaborn as sns
 import pandas as pd
-from matplotlib_chord import chordDiagram
 from constants import *
 from copy import deepcopy
 from dataclasses import dataclass
@@ -122,8 +121,6 @@ class ISPT():
         # Get the index of the requester
         frame = inspect.stack()[1].frame    # The frame of the caller.
         instance = frame.f_locals['self']   # The caller's locals dict.
-        print("instance:", instance)
-        print("players:", ISPT.__players)
         requester = ISPT.__players.index(instance)
 
         # Remove from players list any players the requester doesn't have access to
@@ -411,11 +408,11 @@ class ISPT():
                     score_matrix[table.responder, table.offerer] += points_responder
 
         score_df = pd.DataFrame(score_matrix)
+        score_df.columns, score_df.index = ISPT.__names, ISPT.__names
         ax = sns.heatmap(score_df, linewidths=0.5, annot=True)
 
-        # score_df.columns, score_df.index = ISPT.__names, ISPT.__names
         # Replace diagonal with player name
-        names = ISPT.__names
+        # names = ISPT.__names
         for i, name in zip(range(ISPT.__num_players), ISPT.__names):
             ax.texts[i * ISPT.__num_players + i]._text = name
 
