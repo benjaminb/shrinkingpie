@@ -71,7 +71,7 @@ class ISPT():
     __names = None
     __odd_player = None
 
-    def __init__(self, players, discounts=None, default_discount=0.9, info_availability=None, initial_score=0):
+    def __init__(self, players, discounts=None, default_discount=0.9, info_availability=None, initial_scores=None):
         '''info_availability: a list of lists representing which players' information is available to which players'''
         # Validate input
         num_players = len(players)
@@ -95,7 +95,7 @@ class ISPT():
         ISPT.__state = State(tables = {}, # TODO should this just be a Table object? # this would fix get_past_tables
                         num_players = num_players,
                         round = 0,
-                        scores = (initial_score,) * num_players,
+                        scores = initial_scores if initial_scores else (0,) * num_players,
                         avg_score_per_round = (0,) * num_players,
                         avg_score_per_offer = (0,) * num_players,
                         table_count = (0,) * num_players,

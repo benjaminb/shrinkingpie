@@ -3,7 +3,7 @@
 
 ## Abstract
 
-In the shrinking pie game, two players negotiate how to split a fixed number of points between them. Each turn they do not come to an agreement, the ‘pie’ (points available to be split) shrinks according to a discount factor. Each player aims to maximize their own score. Between two players and with a fixed number of rounds, backward propagation shows the optimal offer that should be made and accepted in the first round. This ruleset expands the two-player game to a tournament with three or more players negotiating in pairs. Most notably, players have an additional action they can play: the option of leaving a negotiation to attempt striking a deal with a more amenable player.
+The shrinking pie game, derived from the Rubinstein bargaining model, has two players negotiate how to split a fixed number of points between them. Each turn they do not come to an agreement, the ‘pie’ (points available to be split) shrinks according to a discount factor. This project presents a ruleset that expands the two-player game to a tournament with three or more players negotiating in pairs. Notably, players have a new action available: the option to leave a negotiation for the prospect of striking a deal with a more amenable player. This may present a better model for real-world bargaining environments, particularly where players have multiple potential partners. Additionaly, this project offers software which implements the ruleset, developed for easy creation and testing of strategies and bargaining environments. The software is highly parametrized, allowing exploration of numerous internal and environmental factors that influence a strategy's success. 
 
 ## Basic Rules
 
@@ -19,9 +19,9 @@ Players are randomly matched in pairs. Each match is called a "table", i.e. a ne
 
 #### Actions
 
-At each of these initial tables, one player is randomly selected to make an initial offer. The offerer makes an offer between 0 and 1 (inclusive), representing the proportion of the pie they are offering to the other player (the 'responder'). Specifically, the offerer's available actions are $O \in [0, 1]$.
+At each of these initial tables, one player is randomly selected to make an initial offer. The offerer makes an offer between 0 and 1 (inclusive), representing the **proportion** of the pie they are offering to the other player (the 'responder'). Specifically, the offerer's available actions are any real value in the interval [0, 1]$.
 
-The responder then has 3 available actions: accept, counteroffer, or reject (actions $= \{ A, C, R\}$). At all tables, the offerers simultaneously propose their splits and the responders immediately and simultaneously choose their responses.
+The responder then has 3 available actions: accept, counteroffer, or reject (actions = { A, C, R}$). At all tables, the offerers simultaneously propose their splits and the responders immediately and simultaneously choose their responses.
 
 
 - Responder accepts: both players split the value of the pie as proposed by Player A. The points get added to each players’ scores. On subsequent rounds, the this table is repeated with the roles reversed: the responder makes an offer $O \in [0, 1]$ and the offerer responds with an action in $\{A, C, R\}$. In other words, the same two players are placed at a table with the responder becoming the offerer and the offerer becoming the responder.
@@ -32,16 +32,22 @@ The responder then has 3 available actions: accept, counteroffer, or reject (act
 
 #### Discounts
 
-It is possible for a player to participate in multiple tables per round: they may be an odd player and get assigned a second table in the first round or they may get assigned to additional tables as a result of other players choosing reject. Each player therefore has a discount factor *per table*, which decreases by their own discount parameter. To be precise, the 'pie' is always 1 point, and offers are always in terms of a *proportion* to be split. But the points each player actually receives is reduced by their current discount factor *at that table*.
+Each player's discount parameter determines how rapidly their share of a pie will shrink. At each table, each round that does not end in 'ACCEPT' results in both players' discounts applied to their potential winnings. Since players may be at more than one table simultaneously, each player has a discount **per table**, which decreases by their discount parameter each round that does not end in 'ACCEPT'.
 
-In other words, if a player comes to a table by being randomly selected (either in the initial round or in later rounds), their discount factor is initialized to 1, otherwise their discount parameter is applied. I.e. players who arrive at a table because in the previous round they rejected or were rejected have their discount parameter applied; players who were randomly selected to participate in the table do not. 
+If a player comes to a table by being randomly selected (either in the initial round or in later rounds), their discount factor is initialized to 1, otherwise their discount parameter is applied. I.e. players who arrive at a table because in the previous round they rejected or were rejected have their discount parameter applied; players who were randomly selected to participate in the table do not. 
 
 For example, say a tournament includes 3 players, P1, P2, and P3, each with a discount rate of 0.9. P1 is tabled with P2, and P1 is also tabled with P3 (P1 is in two tables while P2 is only in one), and say P1 is the offerer at both tables. P3 accepts P1's offer, but P2 rejects. In the next round, P1 and P3 will be at a table together since P3 accepted, with P3 offering and P1 responding. So no new tables need to be generated on behalf of P1 or P3. However, since P2 rejected, there will not be a table with P1 and P2 in the next round, leaving P2 'untabled'. So P2 is randomly paired with another player in the tournament. If the tournament randomly selects P3 to play with P2 in the next round, then P2's discount parameter gets applied but for P3 it does not. As a result, P3's discount this round at this table is 1 while P2's is 0.9. If P3 offers 0.5 and P2 accepts, then P3 gets 0.5 points while P2 gets $0.9 \cdot 0.5 = 0.45$ points. If the table ends in 'Counter', then both players play each other in the next round but P2's discount becomes 0.9 while P3's discount becomes 0.81.
 
+| Round | Offerer   |  Responder  | Response  | Offerer Discount   | Responder Discount   | Offerer Points   | Responder Points   |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+|   |   |   |   |   |   |   |   |
+|   |   |   |   |   |   |   |   |
+
+
 ### Game Parameters:
 The game currently supports these parameters:
-- Length of game: The number of rounds are specified any integer 1 or greater. The default length is 1000 rounds. 
-- Discount parameter: A discount parameter is specified for each player, any real number between 0 and 1. Players could all have the same discount parameter or players can individually have different discounts assigned.
+- Length of game: The maximum number of rounds for the tournament. The default length is 1000 rounds. 
+- Discount parameter: A discount parameter can be specified for each player, any real number between 0 and 1. Players could all have the same discount parameter or players can individually have different discounts assigned.
 - Information: the players have complete information. That is they are aware of all the actions that all players have taken in previous rounds. Additionally, they are aware of all discount factors, scores, and other game statistics. Future versions of the game will support restricting the information available to players.
 - Noise: a noise parameter can be set, any real value in [0, 1], so that any player's response is randomly changed to one of the unchosen responses with a probability of this parameter. E.g. if the noise parameter is 0.01, and a player responds with 'Accept', then there is a 1% chance the response will be switched. If it is switched, then the response will be changed to 'Counter' or 'Reject' with equal likelihood.
 
