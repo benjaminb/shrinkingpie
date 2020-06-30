@@ -19,9 +19,9 @@ Players are randomly matched in pairs. Each match is called a "table", i.e. a ne
 
 #### Actions
 
-At each of these initial tables, one player is randomly selected to make an initial offer. The offerer makes an offer between 0 and 1 (inclusive), representing the **proportion** of the pie they are offering to the other player (the 'responder'). Specifically, the offerer's available actions are any real value in the interval [0, 1]$.
+At each of these initial tables, one player is randomly selected to make an initial offer. The offerer makes an offer between 0 and 1 (inclusive), representing the **proportion** of the pie they are offering to the other player (the 'responder'). Specifically, the offerer's available actions are any real value in the interval [0, 1]: <img src="https://render.githubusercontent.com/render/math?math=O \in [0, 1]">$.
 
-The responder then has 3 available actions: accept, counteroffer, or reject (actions = { A, C, R}$). At all tables, the offerers simultaneously propose their splits and the responders immediately and simultaneously choose their responses.
+The responder then has 3 available actions: accept, counteroffer, or reject (actions = <img src="https://render.githubusercontent.com/render/math?math=\{A, C, R\}">). At all tables, the offerers simultaneously propose their splits and the responders immediately and simultaneously choose their responses.
 
 
 - Responder accepts: both players split the value of the pie as proposed by Player A. The points get added to each players’ scores. On subsequent rounds, the this table is repeated with the roles reversed: the responder makes an offer $O \in [0, 1]$ and the offerer responds with an action in $\{A, C, R\}$. In other words, the same two players are placed at a table with the responder becoming the offerer and the offerer becoming the responder.
