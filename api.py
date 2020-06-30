@@ -64,6 +64,7 @@ class ISPT():
        stored in the instance. This way, agents can call ISPT.some_getter()
        without 'knowing' where the game instance is.
     """
+    __players = None
     __num_players = None
     __state = None
     __history = tuple()
@@ -87,6 +88,7 @@ class ISPT():
         # Todo: write function to check all players have the right attributes
         # Set game constants
         self.players = players
+        ISPT.__players = players
         ISPT.__names = self.set_player_names(players)
         ISPT.__discounts = tuple(discounts) if discounts is not None else ((default_discount,) * num_players)
         ISPT.__odd_player = None
@@ -120,7 +122,9 @@ class ISPT():
         # Get the index of the requester
         frame = inspect.stack()[1].frame    # The frame of the caller.
         instance = frame.f_locals['self']   # The caller's locals dict.
-        requester = self.players.index(instance)
+        print("instance:", instance)
+        print("players:", ISPT.__players)
+        requester = ISPT.__players.index(instance)
 
         # Remove from players list any players the requester doesn't have access to
         allowed = set(ISPT.__info_availability.get(requester, all_players))
@@ -309,7 +313,7 @@ class ISPT():
         if ISPT.__state.num_players % 2:
             # Create a second table with a randomly chosen player
             pair = random.sample(indices, 2)
-            ISTP.__odd_player = pair[1]
+            ISPT.__odd_player = pair[1]
             indices -= {pair[0]}
             pairs.append(pair)
 
@@ -322,9 +326,6 @@ class ISPT():
         return [Table(players=pair, game=self) for pair in pairs]
 
     def increase_table_count(self, players):
-        # table_counts = list(self.state.table_count)
-        # cumulative_tables = list(self.state.cumulative_tables)
-
         table_counts = list(ISPT.__state.table_count)
         cumulative_tables = list(ISPT.__state.cumulative_tables)
 
@@ -373,8 +374,6 @@ class ISPT():
 
     def sb(self):
         fig, axs = plt.subplots(2, 2)
-
-
         names = ISPT.get_names()
         history = ISPT.__history
         # TODO figure out how to make these attributes accessed programmatically
@@ -384,7 +383,6 @@ class ISPT():
         data = {name: [rnd.scores[names.index(name)] for rnd in history] for name in names}
         df = pd.DataFrame(data)
         plots += [sns.lineplot(data=df, dashes = False, ax=axs[0,0])]
-        # g1.get_legend().remove()
 
         data = {name: [rnd.avg_score_per_offer[names.index(name)] for rnd in history] for name in names}
         df = pd.DataFrame(data)
@@ -401,6 +399,28 @@ class ISPT():
         fig.legend(labels=ISPT.get_names(), loc='lower right')
         plt.show()
 
+
+    def heatmap(self):
+        score_matrix = np.zeros((ISPT.__num_players, ISPT.__num_players))
+        for round in ISPT.__history:
+            for table in round.tables:
+                if table.response == ACCEPT:
+                    points_offerer = table.discounts[0] * (1 - table.offer)
+                    points_responder = table.discounts[1] * table.offer
+                    score_matrix[table.offerer, table.responder] += points_offerer
+                    score_matrix[table.responder, table.offerer] += points_responder
+
+        score_df = pd.DataFrame(score_matrix)
+        ax = sns.heatmap(score_df, linewidths=0.5, annot=True)
+
+        # score_df.columns, score_df.index = ISPT.__names, ISPT.__names
+        # Replace diagonal with player name
+        names = ISPT.__names
+        for i, name in zip(range(ISPT.__num_players), ISPT.__names):
+            ax.texts[i * ISPT.__num_players + i]._text = name
+
+        plt.savefig('data/heatmap.png')
+        plt.show()
 
     def export_data(self):
         """Export a CSV file for each player where rows are rounds and columns are

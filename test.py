@@ -15,17 +15,17 @@ player_data = [
                  ['tester', ['t1']],
                  # ['tester', ['tester 0.1', 0.1]],
                  # ['tester', ['t3', 0.2]],
-                 # ['mimic', ['mimic']],
-                 # ['titfortat', ['tft']],
-                 # ['titfortat', ['tft01', 0.01]],
+                 ['mimic', ['mimic']],
+                 ['titfortat', ['tft']],
+                 ['titfortat', ['tft01', 0.01]],
                  # ['jonabot', []],
-                 # ['ghostofrudin', ['gor']],
+                 ['ghostofrudin', ['gor']],
                  ['alwaysRejects', ['ar1']],
                  ['alwaysRejects', ['ar2']],
-                 ['alwaysRejects', ['ar3']]
-                 # ['dd', ['dd']],
-                 # ['dd', ['dd2']],
-                 # ['dd', ['dd3']]
+                 ['alwaysRejects', ['ar3']],
+                 ['dd', ['dd']],
+                 ['dd', ['dd2']],
+                 ['dd', ['dd3']]
               ]
 
 # Instantiate players
@@ -37,11 +37,12 @@ for agent_str, args in player_data:
                     if name.lower() == agent_str.lower() and name != 'Agent']
 
 
+
 # Instantiate game
 print("Players:", players)
 game = ISPT(players=players, info_availability={0: [0, 1]})
-history = game.play(max_rounds=5, termination_prob=(100, 0), export_csv=True)
-
+history = game.play(max_rounds=100, termination_prob=(100, 0), export_csv=True)
+game.heatmap()
 
 # results = ISPT.get_history()
 # print(results)
