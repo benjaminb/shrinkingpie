@@ -10,20 +10,21 @@ sys.path.append(os.getcwd())
 
 
 player_data = [
-                 ['tester', ['t1']],
+                #  ['tester', ['t1']],
                  # ['tester', ['tester 0.1', 0.1]],
                  # ['tester', ['t3', 0.2]],
                  ['mimic', ['mimic']],
                  ['titfortat', ['tft']],
-                #  ['titfortat', ['tft01', 0.01]]
+                 ['titfortat', ['tft01', 0.01]],
+                 ['titfortat', ['tft50', 0.5]],
                  # ['jonabot', []],
-                #  ['ghostofrudin', ['gor']],
-                #  ['alwaysRejects', ['ar1']],
+                 ['ghostofrudin', ['gor']],
+                 ['alwaysRejects', ['ar1']],
                 #  ['alwaysRejects', ['ar2']],
                 #  ['alwaysRejects', ['ar3']],
-                #  ['dd', ['dd']],
-                #  ['dd', ['dd2']],
-                #  ['dd', ['dd3']]
+                 ['dd', ['dd']],
+                 ['dd', ['dd2']],
+                 ['dd', ['dd3']]
               ]
 
 # Instantiate players
@@ -37,7 +38,9 @@ for agent_str, args in player_data:
 
 
 # Instantiate game
-print("Players:", players)
-game = ISPT(players=players, info_availability={0: [0, 1]}, initial_scores=[10, 0, 0, 0])
-history = game.play(max_rounds=10, termination_prob=(100, 0), export_csv=True)
+print("PLAYERS:", len(players))
+game = ISPT(players=players, info_availability={0: [0, 1]})
+history = game.play(max_rounds=200, termination_prob=(100, 0), export_csv=True)
+game.graph_scores()
 # game.heatmap()
+
