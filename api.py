@@ -46,12 +46,6 @@ class State:
     cumulative_tables: tuple
     round: int = 1
 
-    # TODO implement post init constructor?
-    # def __post_init__(self, num_players):
-    #     self.avg_score_per_round = [0] * num_players
-    #     self.avg_score_per_offer = [0] * num_players
-    #     self.table_count = [0] * num_players
-    #     self.cumulative_tables = [0] * num_players
     def update_avg_scores(self):
         self.avg_score_per_round = tuple([score / self.round for score in self.scores])
         self.avg_score_per_offer = tuple([score / tot for (score, tot) in zip(self.scores, self.cumulative_tables)])
@@ -61,7 +55,7 @@ class ISPT():
        Data that should be available to agents is stored as class attributes and
        accessed via getters. Data that should never be accessed by agents is
        stored in the instance. This way, agents can call ISPT.some_getter()
-       without 'knowing' where the game instance is.
+       without 'knowing' where the game instance is, or accidentally mutating history.
     """
     __players = None
     __num_players = None
@@ -88,7 +82,7 @@ class ISPT():
             errmsg = "Length of intial_scores does not match number of players"
             raise ValueError(errmsg)
 
-        # Set game constants
+        # Set initial game values
         self.players = players
 
         ISPT.__instance = self
@@ -97,7 +91,6 @@ class ISPT():
         ISPT.__discounts = tuple(discounts) if discounts is not None else ((default_discount,) * num_players)
         ISPT.__odd_player = None
         ISPT.__info_availability = info_availability
-
         ISPT.__state = State(tables = None,
                         num_players = num_players,
                         round = 0,
@@ -105,7 +98,7 @@ class ISPT():
                         avg_score_per_round = (0,) * num_players,
                         avg_score_per_offer = (0,) * num_players,
                         table_count = (0,) * num_players,
-                        cumulative_tables = (0,) * num_players # total number of tables each player has participated in
+                        cumulative_tables = (0,) * num_players
                      )
         ISPT.history = tuple()
 
@@ -232,7 +225,6 @@ class ISPT():
         '''termination_prob = (round, probability): each round after the round
             given in this tuple, the game randomly terminates with the given
             probability. Note that after max_rounds, the game terminates regardless.
-
         '''
         print("@@@@@@@@@@ THE ISPT @@@@@@@@@@@")
 
@@ -254,13 +246,10 @@ class ISPT():
                 # Play each table & record the results in history
                 table = tables.pop(0)
                 result = table.process()
-
-                # TODO Get all this out of the return value in result instead?
                 players = result.players
                 discounts = result.discounts
 
                 # Check for random noise case
-                # TODO factor this out?
                 if random.random() < response_noise:
                     false_responses = {0, 1, 2} - {result.response}
                     result.response = random.choice(tuple(false_responses))
@@ -273,8 +262,6 @@ class ISPT():
                     # TODO should untabled player check happen only at end of round?
                     for i, player in enumerate(players):
                         if not ISPT.__state.table_count[player]:
-
-                            # TODO factor this out into a function?
                             new_opponent = random.choice([j for j in range(ISPT.__state.num_players) if j not in players])
                             new_pair = player, new_opponent
 
@@ -300,7 +287,6 @@ class ISPT():
             ISPT.__state.update_avg_scores()
 
             # Prepare history object
-            # result_obj = deepcopy(self.state)
             result_obj = deepcopy(ISPT.__state) # Is this line necessary?
             result_obj.tables = tuple(results)
             ISPT.__history = tuple(list(ISPT.__history) + [result_obj])
@@ -380,7 +366,6 @@ class ISPT():
         fig, axs = plt.subplots(2, 2)
         names = ISPT.get_names()
         history = ISPT.__history
-        # TODO figure out how to make these attributes accessed programmatically
 
         # Total score
         plots = []
@@ -419,7 +404,6 @@ class ISPT():
         ax = sns.heatmap(score_df, linewidths=0.5, annot=True, cmap="YlGn")
 
         # Replace diagonal with player name
-        # names = ISPT.__names
         for i, name in zip(range(ISPT.__num_players), ISPT.__names):
             ax.texts[i * ISPT.__num_players + i]._text = name
 
@@ -427,9 +411,6 @@ class ISPT():
         plt.show()
 
     def export_data(self):
-        """Export a CSV file for each player where rows are rounds and columns are
-        tables? Also a master sheet for overall scores, avg score per round?"""
-
         with open('data/tables.csv', mode='w') as csv_file:
             writer = csv.DictWriter(csv_file,
                 fieldnames=['round', 'offerer', 'responder', 'offer', 'response', 'discounts'])
@@ -443,7 +424,6 @@ class ISPT():
                     row['round'] = round.round
                     writer.writerow(row)
 
-        # score_strings = ['score', 'avg_per_offer', 'avg_per_round', 'table_count', 'cumulative_tables']
         score_attrs = ['scores', 'avg_score_per_offer', 'avg_score_per_round', 'table_count', 'cumulative_tables']
         score_headers = [name + '_' + s for s in score_attrs for name in ISPT.__names]
         other_stats = ['num_players', 'round']
@@ -453,8 +433,6 @@ class ISPT():
         with open('data/stats.csv', mode='w') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=column_names)
             writer.writeheader()
-
-            # for round in self.history:
             for round in ISPT.__history:
                 row = {'num_players': round.num_players,
                        'round': round.round}
@@ -473,7 +451,6 @@ class Table():
     def __init__(self, players, game, offerer=False, current_discounts=(1, 1)):
         """    """
         # Get the offerer and responder
-        # TODO does this still work if players is a tuple? If so, make it a tuple everywhere Table() is instantiated
         if not offerer:
             p = list(zip(players, current_discounts))
             random.shuffle(p)
