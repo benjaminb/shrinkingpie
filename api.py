@@ -70,9 +70,9 @@ class ISPT():
     __discounts = None
     __names = None
     __odd_player = None
+    __instance = None
 
     def __init__(self, players, discounts=None, default_discount=0.9, info_availability=None, initial_scores=None):
-        '''info_availability: a list of lists representing which players' information is available to which players'''
         # Validate input
         num_players = len(players)
         ISPT.__num_players = len(players)
@@ -84,15 +84,21 @@ class ISPT():
             errmsg = "Length of discount list passed in does not equal number of players"
             raise ValueError(errmsg)
 
-        # Todo: write function to check all players have the right attributes
+        if initial_scores and len(initial_scores) != num_players:
+            errmsg = "Length of intial_scores does not match number of players"
+            raise ValueError(errmsg)
+
         # Set game constants
         self.players = players
+
+        ISPT.__instance = self
         ISPT.__players = players
         ISPT.__names = self.set_player_names(players)
         ISPT.__discounts = tuple(discounts) if discounts is not None else ((default_discount,) * num_players)
         ISPT.__odd_player = None
         ISPT.__info_availability = info_availability
-        ISPT.__state = State(tables = {}, # TODO should this just be a Table object? # this would fix get_past_tables
+
+        ISPT.__state = State(tables = None,
                         num_players = num_players,
                         round = 0,
                         scores = initial_scores if initial_scores else (0,) * num_players,
@@ -101,6 +107,7 @@ class ISPT():
                         table_count = (0,) * num_players,
                         cumulative_tables = (0,) * num_players # total number of tables each player has participated in
                      )
+        print("STATE INIT:", ISPT.__state)
         ISPT.history = tuple()
 
     # Various getters
@@ -229,10 +236,13 @@ class ISPT():
 
         '''
 
+        print("ROUND:", ISPT.__state.round)
+        print("SCORES:", ISPT.__state.scores)
         print("@@@@@@@@@@ THE ISPT @@@@@@@@@@@")
 
         tables = self.init_tables()
         ISPT.__state.tables = tuple([t.record for t in tables])
+
 
         while ISPT.__state.round < max_rounds:
             results = []; new_tables = []
@@ -369,9 +379,6 @@ class ISPT():
         plt.grid()
         plt.savefig('data/graphs.png')
 
-
-        plt.show()
-
     def sb(self):
         fig, axs = plt.subplots(2, 2)
         names = ISPT.get_names()
@@ -412,7 +419,7 @@ class ISPT():
 
         score_df = pd.DataFrame(score_matrix)
         score_df.columns, score_df.index = ISPT.__names, ISPT.__names
-        ax = sns.heatmap(score_df, linewidths=0.5, annot=True)
+        ax = sns.heatmap(score_df, linewidths=0.5, annot=True, cmap="YlGn")
 
         # Replace diagonal with player name
         # names = ISPT.__names
