@@ -41,6 +41,6 @@ for agent_str, args in player_data:
 print("PLAYERS:", len(players))
 game = ISPT(players=players, info_availability={0: [0, 1]})
 history = game.play(max_rounds=200, termination_prob=(100, 0), export_csv=True)
-# game.graph_scores()
-game.heatmap()
+game.graph_scores()
+# game.heatmap()
 

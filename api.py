@@ -107,7 +107,6 @@ class ISPT():
                         table_count = (0,) * num_players,
                         cumulative_tables = (0,) * num_players # total number of tables each player has participated in
                      )
-        print("STATE INIT:", ISPT.__state)
         ISPT.history = tuple()
 
     # Various getters
@@ -235,9 +234,6 @@ class ISPT():
             probability. Note that after max_rounds, the game terminates regardless.
 
         '''
-
-        print("ROUND:", ISPT.__state.round)
-        print("SCORES:", ISPT.__state.scores)
         print("@@@@@@@@@@ THE ISPT @@@@@@@@@@@")
 
         tables = self.init_tables()
@@ -375,7 +371,8 @@ class ISPT():
             axs[1, 0].set_title('Average Score per Offer')
             axs[1, 1].axis('off')
 
-        fig.legend(labels=ISPT.get_names(), loc='lower right')
+        fig.legend(labels=ISPT.get_names(), loc='lower right', bbox_to_anchor=(0.91, 0.1))
+        fig.set_size_inches(11, 8.5)
         plt.grid()
         plt.savefig('data/graphs.png')
 
