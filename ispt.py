@@ -15,7 +15,7 @@ player_data = [
                  # ['tester', ['t3', 0.2]],
                  ['mimic', ['mimic']],
                  ['titfortat', ['tft']],
-                 ['titfortat', ['tft01', 0.01]]
+                #  ['titfortat', ['tft01', 0.01]]
                  # ['jonabot', []],
                 #  ['ghostofrudin', ['gor']],
                 #  ['alwaysRejects', ['ar1']],
@@ -40,13 +40,4 @@ for agent_str, args in player_data:
 print("Players:", players)
 game = ISPT(players=players, info_availability={0: [0, 1]}, initial_scores=[10, 0, 0, 0])
 history = game.play(max_rounds=10, termination_prob=(100, 0), export_csv=True)
-game.heatmap()
-
-# results = ISPT.get_history()
-# print(results)
-# pp.pprint(ISPT.get_history())
-
-# game.sb()
-
-# game.graph_scores()
-# game.chord_chart()
+# game.heatmap()

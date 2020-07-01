@@ -129,6 +129,9 @@ class ISPT():
         results = []
         for round in ISPT.__history:
             results.append([t for t in round.tables if t.offerer in players or t.responder in players])
+        
+        if not results:
+            return [[]] # so that get_history()[-1] still works
         return results
 
     @classmethod

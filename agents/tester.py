@@ -9,7 +9,21 @@ class Tester(Agent):
         self.init_offer = init_offer
 
     def offer(self, table):
-        return self.init_offer
+        history = ISPT.get_history(players=[1, 5, 9])
+        offers = []
+        for round in history:
+            offers += [t.offer for t in round]
+
+        if offers:
+            return sum(offers) / len(offers)
+        else:
+            return 0.25
 
     def response(self, table, offer):
-        return ACCEPT
+        last = ISPT.get_history()[-1]
+        accepted = [table.offer for table in last if table.response == ACCEPT]
+
+        if accepted:
+            return sum(accepted) / len(accepted)
+        else:
+            return 1 # i.e. choose to counteroffer
