@@ -66,7 +66,10 @@ class ISPT():
     __odd_player = None
     __instance = None
 
-    def __init__(self, players, discounts=None, default_discount=0.9, info_availability=None, initial_scores=None):
+
+# max_rounds=1000, termination_prob=(100, 0.01), response_noise=0.01, export_csv=False
+    def __init__(self, players, discounts=None, default_discount=0.9, info_availability=None, initial_scores=None,
+                 max_rounds=1000, termination_prob=(100, 0.01), response_noise=0.0, export_csv=False):
         # Validate input
         num_players = len(players)
         ISPT.__num_players = len(players)
@@ -81,6 +84,13 @@ class ISPT():
         if initial_scores and len(initial_scores) != num_players:
             errmsg = "Length of intial_scores does not match number of players"
             raise ValueError(errmsg)
+
+        # Set game parameters
+        self.max_rounds = max_rounds
+        self.termination_prob = termination_prob
+        self.response_noise = response_noise
+        self.export_csv = export_csv
+
 
         # Set initial game values
         self.players = players
@@ -221,7 +231,7 @@ class ISPT():
         return
 
     # Play the tournament
-    def play(self, max_rounds=1000, termination_prob=(100, 0.01), response_noise=0.01, export_csv=False):
+    def play(self):
         '''termination_prob = (round, probability): each round after the round
             given in this tuple, the game randomly terminates with the given
             probability. Note that after max_rounds, the game terminates regardless.
@@ -232,13 +242,13 @@ class ISPT():
         ISPT.__state.tables = tuple([t.record for t in tables])
 
 
-        while ISPT.__state.round < max_rounds:
+        while ISPT.__state.round < self.max_rounds:
             results = []; new_tables = []
             ISPT.__state.round += 1
 
             # Test for random termination
             # TODO come up with better name for random termination params
-            if ISPT.__state.round > termination_prob[0] and random.random() < termination_prob[1]:
+            if ISPT.__state.round > self.termination_prob[0] and random.random() < self.termination_prob[1]:
                 break
 
 
@@ -250,7 +260,7 @@ class ISPT():
                 discounts = result.discounts
 
                 # Check for random noise case
-                if random.random() < response_noise:
+                if random.random() < self.response_noise:
                     false_responses = {0, 1, 2} - {result.response}
                     result.response = random.choice(tuple(false_responses))
 
@@ -292,7 +302,7 @@ class ISPT():
             ISPT.__history = tuple(list(ISPT.__history) + [result_obj])
             # End of round
 
-        if export_csv:
+        if self.export_csv:
             self.export_data()
 
         return ISPT.__history
