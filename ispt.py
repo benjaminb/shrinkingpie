@@ -1,6 +1,7 @@
 import os
 import sys, inspect
 import importlib
+import time
 import pprint as pp
 from api import *
 from agent import Agent
@@ -17,7 +18,7 @@ player_data = [
                  ['titfortat', ['tft']],
                  ['titfortat', ['tft01', 0.01]],
                  ['titfortat', ['tft50', 0.5]],
-                 # ['jonabot', []],
+                 ['jonabot', []],
                  ['ghostofrudin', ['gor']],
                  ['alwaysRejects', ['ar1']],
                 #  ['alwaysRejects', ['ar2']],
@@ -36,11 +37,12 @@ for agent_str, args in player_data:
                     if name.lower() == agent_str.lower() and name != 'Agent']
 
 
-
+start = time.time()
 # Instantiate game
 print("PLAYERS:", len(players))
-game = ISPT(players=players, info_availability={0: [0, 1]}, max_rounds=10)
+game = ISPT(players=players, info_availability={0: [0, 1]}, max_rounds=100)
 history = game.play()
 game.graph_scores()
 # game.heatmap()
-
+end = time.time()
+print(f"Processing time: {end - start}")
