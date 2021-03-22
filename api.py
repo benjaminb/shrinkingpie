@@ -16,17 +16,17 @@ sns.set(style='darkgrid')
 @dataclass
 class GameConstants:
     discounts: int
-    names: tuple
+    names: list
     odd_player: int
 
 @dataclass
 class TableRecord:
     offerer: int
     responder: int
-    players: tuple
+    players: list
     offer: float
     response: int
-    discounts: tuple
+    discounts: list
 
     def asdict(self):
         return {'offerer': self.offerer,
@@ -37,18 +37,18 @@ class TableRecord:
 
 @dataclass
 class State:
-    tables: tuple
+    tables: list
     num_players: int
-    scores: tuple
-    avg_score_per_round: tuple
-    avg_score_per_offer: tuple
-    table_count: tuple
-    cumulative_tables: tuple
+    scores: list
+    avg_score_per_round: list
+    avg_score_per_offer: list
+    table_count: list
+    cumulative_tables: list
     round: int = 1
 
     def update_avg_scores(self):
-        self.avg_score_per_round = tuple([score / self.round for score in self.scores])
-        self.avg_score_per_offer = tuple([score / tot for (score, tot) in zip(self.scores, self.cumulative_tables)])
+        self.avg_score_per_round = [score / self.round for score in self.scores]
+        self.avg_score_per_offer = [score / tot for (score, tot) in zip(self.scores, self.cumulative_tables)]
 
 class ISPT():
     """Structure of the game
@@ -60,7 +60,7 @@ class ISPT():
     __players = None
     __num_players = None
     __state = None
-    __history = tuple()
+    __history = list()
     __discounts = None
     __names = None
     __odd_player = None
@@ -98,19 +98,19 @@ class ISPT():
         ISPT.__instance = self
         ISPT.__players = players
         ISPT.__names = self.set_player_names(players)
-        ISPT.__discounts = tuple(discounts) if discounts is not None else ((default_discount,) * num_players)
+        ISPT.__discounts = discounts if discounts is not None else [default_discount] * num_players
         ISPT.__odd_player = None
         ISPT.__info_availability = info_availability
         ISPT.__state = State(tables = None,
                         num_players = num_players,
                         round = 0,
-                        scores = initial_scores if initial_scores else (0,) * num_players,
-                        avg_score_per_round = (0,) * num_players,
-                        avg_score_per_offer = (0,) * num_players,
-                        table_count = (0,) * num_players,
-                        cumulative_tables = (0,) * num_players
+                        scores = initial_scores if initial_scores else [0] * num_players,
+                        avg_score_per_round = [0] * num_players,
+                        avg_score_per_offer = [0] * num_players,
+                        table_count = [0] * num_players,
+                        cumulative_tables = [0] * num_players
                      )
-        ISPT.history = tuple()
+        ISPT.history = list()
 
     # Various getters
     @classmethod
@@ -227,19 +227,19 @@ class ISPT():
         for i in range(2):
             scores[players[i]] += splits[i] * discounts[i]
 
-        ISPT.__state.scores = tuple(scores)
+        ISPT.__state.scores = scores
         return
 
     # Play the tournament
     def play(self):
-        '''termination_prob = (round, probability): each round after the round
-            given in this tuple, the game randomly terminates with the given
+        '''termination_prob = [round, probability]: each round after the round
+            given in this list the game randomly terminates with the given
             probability. Note that after max_rounds, the game terminates regardless.
         '''
         print("@@@@@@@@@@ THE ISPT @@@@@@@@@@@")
 
         tables = self.init_tables()
-        ISPT.__state.tables = tuple([t.record for t in tables])
+        ISPT.__state.tables = [t.record for t in tables]
 
 
         while ISPT.__state.round < self.max_rounds:
@@ -262,7 +262,7 @@ class ISPT():
                 # Check for random noise case
                 if random.random() < self.response_noise:
                     false_responses = {0, 1, 2} - {result.response}
-                    result.response = random.choice(tuple(false_responses))
+                    result.response = random.choice(false_responses)
 
                 results.append(result)
 
@@ -283,9 +283,9 @@ class ISPT():
                 else:
                     if result.response == ACCEPT:
                         self.award_points(players, discounts, result.offer)
-                        new_discounts = (1, 1)
+                        new_discounts = [1, 1]
                     else: # Counteroffer    note: tuple wrapper needed since Python does not have tuple comprehension
-                        new_discounts = tuple(discounts[i] * ISPT.__discounts[players[i]] for i in range(2))
+                        new_discounts = [discounts[i] * ISPT.__discounts[players[i]] for i in range(2)]
 
                     # Either case: create table with player roles switched, appropriate discounts
                     new_tables.append(table.switch_players(discounts=new_discounts))
@@ -298,8 +298,8 @@ class ISPT():
 
             # Prepare history object
             result_obj = deepcopy(ISPT.__state) # Is this line necessary?
-            result_obj.tables = tuple(results)
-            ISPT.__history = tuple(list(ISPT.__history) + [result_obj])
+            result_obj.tables = results
+            ISPT.__history.append(result_obj)
             # End of round
 
         if self.export_csv:
@@ -328,25 +328,25 @@ class ISPT():
         return [Table(players=pair, game=self) for pair in pairs]
 
     def increase_table_count(self, players):
-        table_counts = list(ISPT.__state.table_count)
-        cumulative_tables = list(ISPT.__state.cumulative_tables)
+        table_counts = ISPT.__state.table_count
+        cumulative_tables = ISPT.__state.cumulative_tables
 
         for p in players:
             table_counts[p] += 1
             cumulative_tables[p] += 1
 
-        ISPT.__state.table_count = tuple(table_counts)
-        ISPT.__state.cumulative_tables = tuple(cumulative_tables)
+        ISPT.__state.table_count = table_counts
+        ISPT.__state.cumulative_tables = cumulative_tables
         return
 
     def decrease_table_count(self, players):
         # table_counts = list(self.state.table_count)
-        table_counts = list(ISPT.__state.table_count)
+        table_counts = ISPT.__state.table_count
 
         for p in players:
             table_counts[p] -= 1
 
-        ISPT.__state.table_count = tuple(table_counts)
+        ISPT.__state.table_count = table_counts
         return
 
 
@@ -468,7 +468,7 @@ class Table():
 
         self.record = TableRecord(offerer = players[0],
                            responder = players[1],
-                           players = tuple(players),
+                           players = players,
                            offer = None,
                            response = None,
                            discounts = current_discounts)
