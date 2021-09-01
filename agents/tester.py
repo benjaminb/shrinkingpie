@@ -23,7 +23,4 @@ class Tester(Agent):
         last = ISPT.get_history()[-1]
         accepted = [table.offer for table in last if table.response == ACCEPT]
 
-        if accepted:
-            return sum(accepted) / len(accepted)
-        else:
-            return 1 # i.e. choose to counteroffer
+        return ACCEPT if accepted else COUNTER

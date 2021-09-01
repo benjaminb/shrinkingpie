@@ -1,0 +1,14 @@
+AlwaysAccepts,0.9,AA10,0.1
+AlwaysAccepts,0.9,AA30,0.3
+AlwaysAccepts,0.9,AA50,0.5
+AlwaysRejects,0.9,AR20,0.2,0.5
+AlwaysRejects,0.9,AR10,0.1,0.5
+AlwaysRejects,0.9,AR01,0.01,0.5
+Random,0.9,Rand
+Titfortat,0.9,TFT50,0.5
+Titfortat,0.9,TFT30,0.3
+Titfortat,0.9,TFT10,0.1
+Grim,0.9,Grim50_50
+Grim,0.9,Grim40_25,0.4,0.25
+Pavlov,0.9,Pavlov50_25,0.5,0.25
+Pavlov,0.9,Pavlov35_20,0.35,0.2

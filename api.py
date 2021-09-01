@@ -546,7 +546,7 @@ class Table():
 
         offer = self.game.players[self.record.offerer].offer(self.record)
         if offer is None:
-            print('none offer from player:')
+            print('None offer from player:')
             print(self.game.players[self.offerer].__class__.__name__)
         self.record.offer = offer
         self.record.response = self.game.players[
