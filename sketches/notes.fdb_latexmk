@@ -1,5 +1,5 @@
 # Fdb version 3
-["pdflatex"] 1630431953 "/Users/benjaminbasseri/Dropbox/ISPT/sketches/notes.tex" "/Users/benjaminbasseri/Dropbox/ISPT/sketches/notes.pdf" "notes" 1630431954
+["pdflatex"] 1630431953 "/Users/benjaminbasseri/Dropbox/ISPT/sketches/notes.tex" "/Users/benjaminbasseri/Dropbox/ISPT/sketches/notes.pdf" "notes" 1630526925
   "/Users/benjaminbasseri/Dropbox/ISPT/sketches/notes.aux" 1630431954 895 5793f7e937dda04e58eb6ce6d1e08f09 ""
   "/Users/benjaminbasseri/Dropbox/ISPT/sketches/notes.tex" 1630431953 6639 ae3bc29617761484a34058ad6c5c0302 ""
   "/usr/local/texlive/2021/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
@@ -71,8 +71,8 @@
   "notes.aux" 1630431954 895 5793f7e937dda04e58eb6ce6d1e08f09 "pdflatex"
   "notes.tex" 1630431953 6639 ae3bc29617761484a34058ad6c5c0302 ""
   (generated)
-  "notes.pdf"
-  "notes.aux"
   "/Users/benjaminbasseri/Dropbox/ISPT/sketches/notes.pdf"
-  "/Users/benjaminbasseri/Dropbox/ISPT/sketches/notes.log"
+  "notes.aux"
   "notes.log"
+  "notes.pdf"
+  "/Users/benjaminbasseri/Dropbox/ISPT/sketches/notes.log"
