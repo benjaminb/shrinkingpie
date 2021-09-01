@@ -1,0 +1,14 @@
+\documentclass{scrartcl}
+\usepackage[T1]{fontenc}
+\usepackage{sgame}
+
+\begin{document}
+\begin{game}{3}{3}[Player~i][Player~j]
+    & Accept & Counter & Reject\\
+Accept & $Ns_i, N(1 - s_i)$ & 
+        $\lfloor \frac{N}{2} \rfloor \delta_i (1 - s_j), \lfloor \frac{N}{2} \rfloor \delta_j s_j$  & 
+        $0, 0$\\
+Counter  &$3,0$ & x & a\\
+Reject & 0 & 0 & 0\\
+\end{game}
+\end{document}

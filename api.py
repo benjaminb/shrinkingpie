@@ -13,27 +13,32 @@ import pprint as pp
 
 sns.set(style='darkgrid')
 
+
 @dataclass
 class GameConstants:
     discounts: int
     names: list
     odd_player: int
 
+
 @dataclass
 class TableRecord:
-    offerer: int
+    offerer: int  # game id of player to make offer
     responder: int
-    players: list
-    offer: float
-    response: int
-    discounts: list
+    players: list  # [id1, id2]
+    offer: float  # in [0, 1] range
+    response: int  # [0 = accept, 1 = counter, 2 = reject]
+    discounts: list  # [d1, d2]
 
     def asdict(self):
-        return {'offerer': self.offerer,
-                'responder': self.responder,
-                'offer': self.offer,
-                'response': self.response,
-                'discounts': self.discounts}
+        return {
+            'offerer': self.offerer,
+            'responder': self.responder,
+            'offer': self.offer,
+            'response': self.response,
+            'discounts': self.discounts
+        }
+
 
 @dataclass
 class State:
@@ -47,8 +52,14 @@ class State:
     round: int = 1
 
     def update_avg_scores(self):
-        self.avg_score_per_round = [score / self.round for score in self.scores]
-        self.avg_score_per_offer = [score / tot for (score, tot) in zip(self.scores, self.cumulative_tables)]
+        self.avg_score_per_round = [
+            score / self.round for score in self.scores
+        ]
+        self.avg_score_per_offer = [
+            score / tot
+            for (score, tot) in zip(self.scores, self.cumulative_tables)
+        ]
+
 
 class ISPT():
     """Structure of the game
@@ -66,10 +77,17 @@ class ISPT():
     __odd_player = None
     __instance = None
 
-
-# max_rounds=1000, termination_prob=(100, 0.01), response_noise=0.01, export_csv=False
-    def __init__(self, players, discounts=None, default_discount=0.9, info_availability=None, initial_scores=None,
-                 max_rounds=1000, termination_prob=(100, 0.01), response_noise=0.0, export_csv=False):
+    # max_rounds=1000, termination_prob=(100, 0.01), response_noise=0.01, export_csv=False
+    def __init__(self,
+                 players,
+                 discounts=None,
+                 default_discount=0.9,
+                 info_availability=None,
+                 initial_scores=None,
+                 max_rounds=1000,
+                 termination_prob=(100, 0.01),
+                 response_noise=0.0,
+                 export_csv=False):
         # Validate input
         num_players = len(players)
         ISPT.__num_players = len(players)
@@ -91,25 +109,26 @@ class ISPT():
         self.response_noise = response_noise
         self.export_csv = export_csv
 
-
         # Set initial game values
         self.players = players
 
         ISPT.__instance = self
         ISPT.__players = players
         ISPT.__names = self.set_player_names(players)
-        ISPT.__discounts = discounts if discounts is not None else [default_discount] * num_players
+        ISPT.__discounts = discounts if discounts is not None else [
+            default_discount
+        ] * num_players
         ISPT.__odd_player = None
-        ISPT.__info_availability = info_availability
-        ISPT.__state = State(tables = None,
-                        num_players = num_players,
-                        round = 0,
-                        scores = initial_scores if initial_scores else [0] * num_players,
-                        avg_score_per_round = [0] * num_players,
-                        avg_score_per_offer = [0] * num_players,
-                        table_count = [0] * num_players,
-                        cumulative_tables = [0] * num_players
-                     )
+        ISPT.__info_availability = info_availability if info_availability is not None else {}
+        ISPT.__state = State(tables=None,
+                             num_players=num_players,
+                             round=0,
+                             scores=initial_scores if initial_scores else [0] *
+                             num_players,
+                             avg_score_per_round=[0] * num_players,
+                             avg_score_per_offer=[0] * num_players,
+                             table_count=[0] * num_players,
+                             cumulative_tables=[0] * num_players)
         ISPT.history = list()
 
     # Various getters
@@ -128,8 +147,8 @@ class ISPT():
         # TODO: If game played with complete information then a lot of this is unnecessary
         #TODO factor this out
         # Get the index of the requester
-        frame = inspect.stack()[1].frame    # The frame of the caller.
-        instance = frame.f_locals['self']   # The caller's locals dict.
+        frame = inspect.stack()[1].frame  # The frame of the caller.
+        instance = frame.f_locals['self']  # The caller's locals dict.
         requester = ISPT.__players.index(instance)
 
         # Remove from players list any players the requester doesn't have access to
@@ -137,10 +156,13 @@ class ISPT():
         players = players_requested.intersection(allowed)
         results = []
         for round in ISPT.__history:
-            results.append([t for t in round.tables if t.offerer in players or t.responder in players])
-        
+            results.append([
+                t for t in round.tables
+                if t.offerer in players or t.responder in players
+            ])
+
         if not results:
-            return [[]] # so that get_history()[-1] still works
+            return [[]]  # so that get_history()[-1] still works
         return results
 
     @classmethod
@@ -149,11 +171,13 @@ class ISPT():
 
     @classmethod
     def get_rankings(cls, stat='score'):
-        stat_dict = {'score': ISPT.__state.scores,
-                     'avg_score_per_round': ISPT.__state.avg_score_per_round,
-                     'avg_score_per_offer': ISPT.__state.avg_score_per_offer}
+        stat_dict = {
+            'score': ISPT.__state.scores,
+            'avg_score_per_round': ISPT.__state.avg_score_per_round,
+            'avg_score_per_offer': ISPT.__state.avg_score_per_offer
+        }
         rankings = list(range(ISPT.num_players()))
-        rankings.sort(key = lambda x: stat_dict[stat][x], reverse=True)
+        rankings.sort(key=lambda x: stat_dict[stat][x], reverse=True)
         return rankings
 
     @classmethod
@@ -193,25 +217,34 @@ class ISPT():
         return results
 
     def get_past_tables(self, player):
-        return [t for round in self.history for t in round.tables if player in t]
+        return [
+            t for round in self.history for t in round.tables if player in t
+        ]
 
     def get_past_responses(self, player):
-        return [round.tables[t]['response'] for round in self.history for t in round.tables if player == t[1]]
+        return [
+            round.tables[t]['response'] for round in self.history
+            for t in round.tables if player == t[1]
+        ]
 
     def get_accepted_offers(self, player):
-        return [round.tables[t]['offer'] for round in self.history for t in round.tables
-                if player == t[1] and round.tables[t]['response'] == ACCEPT]
+        return [
+            round.tables[t]['offer'] for round in self.history
+            for t in round.tables
+            if player == t[1] and round.tables[t]['response'] == ACCEPT
+        ]
 
     def set_player_names(self, players):
         names = []
-        ctr = 0 # suffix for unnamed players
+        ctr = 0  # suffix for unnamed players
         for i, player in enumerate(players):
             player.name = player.__class__.__name__ if not player.name else player.name
 
         for i, player in enumerate(players):
             if hasattr(player, 'name') and isinstance(player.name, str):
 
-                name = player.name if player.name not in names else player.name + str(names.count(player.name))
+                name = player.name if player.name not in names else player.name + str(
+                    names.count(player.name))
                 names.append(name)
                 continue
             # No name passed in
@@ -241,16 +274,16 @@ class ISPT():
         tables = self.init_tables()
         ISPT.__state.tables = [t.record for t in tables]
 
-
         while ISPT.__state.round < self.max_rounds:
-            results = []; new_tables = []
+            results = []
+            new_tables = []
             ISPT.__state.round += 1
 
             # Test for random termination
             # TODO come up with better name for random termination params
-            if ISPT.__state.round > self.termination_prob[0] and random.random() < self.termination_prob[1]:
+            if ISPT.__state.round > self.termination_prob[0] and random.random(
+            ) < self.termination_prob[1]:
                 break
-
 
             while tables:
                 # Play each table & record the results in history
@@ -272,23 +305,34 @@ class ISPT():
                     # TODO should untabled player check happen only at end of round?
                     for i, player in enumerate(players):
                         if not ISPT.__state.table_count[player]:
-                            new_opponent = random.choice([j for j in range(ISPT.__state.num_players) if j not in players])
+                            new_opponent = random.choice([
+                                j for j in range(ISPT.__state.num_players)
+                                if j not in players
+                            ])
                             new_pair = player, new_opponent
 
                             # Apply discount
-                            new_discounts = (discounts[i] * ISPT.__discounts[player], 1)
-                            new_tables.append(Table(players=new_pair, game=self, current_discounts=new_discounts))
+                            new_discounts = (discounts[i] *
+                                             ISPT.__discounts[player], 1)
+                            new_tables.append(
+                                Table(players=new_pair,
+                                      game=self,
+                                      current_discounts=new_discounts))
 
                 # Offer accepted or countered:
                 else:
                     if result.response == ACCEPT:
                         self.award_points(players, discounts, result.offer)
                         new_discounts = [1, 1]
-                    else: # Counteroffer    note: tuple wrapper needed since Python does not have tuple comprehension
-                        new_discounts = [discounts[i] * ISPT.__discounts[players[i]] for i in range(2)]
+                    else:  # Counteroffer    note: tuple wrapper needed since Python does not have tuple comprehension
+                        new_discounts = [
+                            discounts[i] * ISPT.__discounts[players[i]]
+                            for i in range(2)
+                        ]
 
                     # Either case: create table with player roles switched, appropriate discounts
-                    new_tables.append(table.switch_players(discounts=new_discounts))
+                    new_tables.append(
+                        table.switch_players(discounts=new_discounts))
 
             # Update game information
             tables = new_tables
@@ -297,7 +341,7 @@ class ISPT():
             ISPT.__state.update_avg_scores()
 
             # Prepare history object
-            result_obj = deepcopy(ISPT.__state) # Is this line necessary?
+            result_obj = deepcopy(ISPT.__state)  # Is this line necessary?
             result_obj.tables = results
             ISPT.__history.append(result_obj)
             # End of round
@@ -349,8 +393,8 @@ class ISPT():
         ISPT.__state.table_count = table_counts
         return
 
-
     def graph_scores(self):
+        # x = range(ISPT.round())
         x = range(ISPT.round())
         fig, axs = plt.subplots(2, 2)
 
@@ -359,6 +403,7 @@ class ISPT():
             b = [rnd.avg_score_per_round[i] for rnd in ISPT.__history]
             c = [rnd.avg_score_per_offer[i] for rnd in ISPT.__history]
 
+            # print("vars:\n", ISPT.round(), len(a))
             axs[0, 0].plot(x, a, label=str(i))
             axs[0, 0].set_title('Score')
             axs[0, 1].plot(x, b)
@@ -367,7 +412,9 @@ class ISPT():
             axs[1, 0].set_title('Average Score per Offer')
             axs[1, 1].axis('off')
 
-        fig.legend(labels=ISPT.get_names(), loc='lower right', bbox_to_anchor=(0.91, 0.1))
+        fig.legend(labels=ISPT.get_names(),
+                   loc='lower right',
+                   bbox_to_anchor=(0.91, 0.1))
         fig.set_size_inches(11, 8.5)
         plt.grid()
         plt.savefig('data/graphs.png')
@@ -379,17 +426,28 @@ class ISPT():
 
         # Total score
         plots = []
-        data = {name: [rnd.scores[names.index(name)] for rnd in history] for name in names}
+        data = {
+            name: [rnd.scores[names.index(name)] for rnd in history]
+            for name in names
+        }
         df = pd.DataFrame(data)
-        plots += [sns.lineplot(data=df, dashes = False, ax=axs[0,0])]
+        plots += [sns.lineplot(data=df, dashes=False, ax=axs[0, 0])]
 
-        data = {name: [rnd.avg_score_per_offer[names.index(name)] for rnd in history] for name in names}
+        data = {
+            name:
+            [rnd.avg_score_per_offer[names.index(name)] for rnd in history]
+            for name in names
+        }
         df = pd.DataFrame(data)
-        plots += [sns.lineplot(data=df, dashes=False, ax=axs[0,1])]
+        plots += [sns.lineplot(data=df, dashes=False, ax=axs[0, 1])]
 
-        data = {name: [rnd.avg_score_per_round[names.index(name)] for rnd in history] for name in names}
+        data = {
+            name:
+            [rnd.avg_score_per_round[names.index(name)] for rnd in history]
+            for name in names
+        }
         df = pd.DataFrame(data)
-        plots += [sns.lineplot(data=df, dashes = False, ax=axs[1,0])]
+        plots += [sns.lineplot(data=df, dashes=False, ax=axs[1, 0])]
 
         for plot in plots:
             plot.get_legend().remove()
@@ -398,16 +456,18 @@ class ISPT():
         fig.legend(labels=ISPT.get_names(), loc='lower right')
         plt.show()
 
-
     def heatmap(self):
+        plt.clf()
         score_matrix = np.zeros((ISPT.__num_players, ISPT.__num_players))
         for round in ISPT.__history:
             for table in round.tables:
                 if table.response == ACCEPT:
                     points_offerer = table.discounts[0] * (1 - table.offer)
                     points_responder = table.discounts[1] * table.offer
-                    score_matrix[table.offerer, table.responder] += points_offerer
-                    score_matrix[table.responder, table.offerer] += points_responder
+                    score_matrix[table.offerer,
+                                 table.responder] += points_offerer
+                    score_matrix[table.responder,
+                                 table.offerer] += points_responder
 
         score_df = pd.DataFrame(score_matrix)
         score_df.columns, score_df.index = ISPT.__names, ISPT.__names
@@ -418,12 +478,15 @@ class ISPT():
             ax.texts[i * ISPT.__num_players + i]._text = name
 
         plt.savefig('data/heatmap.png')
-        plt.show()
+        # plt.show()
 
     def export_data(self):
         with open('data/tables.csv', mode='w') as csv_file:
             writer = csv.DictWriter(csv_file,
-                fieldnames=['round', 'offerer', 'responder', 'offer', 'response', 'discounts'])
+                                    fieldnames=[
+                                        'round', 'offerer', 'responder',
+                                        'offer', 'response', 'discounts'
+                                    ])
 
             writer.writeheader()
 
@@ -434,18 +497,21 @@ class ISPT():
                     row['round'] = round.round
                     writer.writerow(row)
 
-        score_attrs = ['scores', 'avg_score_per_offer', 'avg_score_per_round', 'table_count', 'cumulative_tables']
-        score_headers = [name + '_' + s for s in score_attrs for name in ISPT.__names]
+        score_attrs = [
+            'scores', 'avg_score_per_offer', 'avg_score_per_round',
+            'table_count', 'cumulative_tables'
+        ]
+        score_headers = [
+            name + '_' + s for s in score_attrs for name in ISPT.__names
+        ]
         other_stats = ['num_players', 'round']
         column_names = other_stats + score_headers
-
 
         with open('data/stats.csv', mode='w') as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=column_names)
             writer.writeheader()
             for round in ISPT.__history:
-                row = {'num_players': round.num_players,
-                       'round': round.round}
+                row = {'num_players': round.num_players, 'round': round.round}
 
                 # Get the score tuples from round and place into row dict
                 score_tuples = [getattr(round, attr) for attr in score_attrs]
@@ -457,7 +523,6 @@ class ISPT():
 
 class Table():
     """Determines structure for a round of actions"""
-
     def __init__(self, players, game, offerer=False, current_discounts=(1, 1)):
         """    """
         # Get the offerer and responder
@@ -466,12 +531,12 @@ class Table():
             random.shuffle(p)
             players, current_discounts = zip(*p)
 
-        self.record = TableRecord(offerer = players[0],
-                           responder = players[1],
-                           players = players,
-                           offer = None,
-                           response = None,
-                           discounts = current_discounts)
+        self.record = TableRecord(offerer=players[0],
+                                  responder=players[1],
+                                  players=players,
+                                  offer=None,
+                                  response=None,
+                                  discounts=current_discounts)
         self.game = game
         self.game.increase_table_count(players)
 
@@ -484,7 +549,8 @@ class Table():
             print('none offer from player:')
             print(self.game.players[self.offerer].__class__.__name__)
         self.record.offer = offer
-        self.record.response = self.game.players[self.record.responder].response(self.record, offer)
+        self.record.response = self.game.players[
+            self.record.responder].response(self.record, offer)
         self.game.decrease_table_count(self.record.players)
 
         return self.record

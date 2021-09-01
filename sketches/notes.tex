@@ -1,0 +1,127 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{enumerate}
+\usepackage[mathscr]{euscript}
+\usepackage{faktor}
+\usepackage{mathtools}
+
+
+\newcommand{\tand}{\text{ and }}
+
+\title{ISPT Notes}
+\author{Benjamin Basseri}
+\date{ }
+
+\begin{document}
+
+\maketitle
+
+\section{Offer Asymmetry} We can measure the asymmetry between two players' offers by the slope of the line connecting Player 1's offer (plotted on the $x$ axis) to Player 2's offer (plotted on the $y$ axis). The slope can be in the range $[0, \infty)$, so a useful metric is the slope's difference from $-1$. It may be convenient to do this in radians, so we express the slope as $\arctan\left(\faktor{-\mathcal{O}_1}{\mathcal{O}_1}\right)$. We want the difference between this and $-\pi/4$, then we normalize by $\pi/4$ since that is the maximum angle difference.
+
+The signed metric $\mathcal{A}$ for offer asymmetry between two players is defined as:
+$$\mathcal{A} = 1 + \frac{4}{\pi}\tan^{-1}\left(-\frac{\mathcal{O}_2}{\mathcal{O}_1}\right)$$
+
+where $\mathcal{O}_i$ is the offer of player $i$. This is positive when $\mathcal{O}_1 > \mathcal{O}_2$ and negative when $\mathcal{O}_2 > \mathcal{O}_1$.
+
+\textbf{Alternative:} Why not just use $\mathcal{O}_1 - \mathcal{O}_2$? Is one metric more useful than the other?
+
+\section{Static Strategies}
+
+Let $T_{i,j}$ be the indicator r.v. that a table exists between players $i$ and $j$. To compute $P(T_{i,j} = 1)$ we write:
+
+$$P(T_{i,j} = 1) = \frac{1}{n-1} + P((i,j) \rightarrow A/C)\frac{n}{n-1}P(T_{i,j} = 1)$$
+
+where $n$ is number of players, and $(i,j) \rightarrow A/C$ means that players $i,j$ tabled together would result in a Counter or Accept action. This can be algebraically rewritten as:
+
+$$P(T_{i,j} = 1) = \frac{1}{nP((i,j) \rightarrow R) - 1}$$
+
+which is decreasing in $n$ and the probably that $(i,j)$ would end in Rejection. This makes sense since if there are more players, it is less likely that any particular table should exist, and as the probability of rejection increases it is less likely for a table to survive.
+
+Alternative:
+\newcommand{\offer}{\mathcal{O}}
+
+$$P(T_{i,j} = 1) = \frac{1}{1 - \left[P(\offer_i \in C_j) + P(\offer_i \in A_j))\right]\left[P(\offer_j \in C_i) + P(\offer_j \in A_i)\right]}$$
+
+\section{Order Statistics}
+
+Suppose the lower boundaries of all agents' counter/accept regions are drawn from a CDF $c, a \sim F$. We assume $c < a$, therefore $a$ is the maximum of two samples from the distribution, c is the min. 
+$$X_1, X_2 \stackrel{iid}{\sim} F$$
+$$a = X_{(2)}, c = X_{(1)}$$
+
+Using order statistics we compute the CDFs for $a, c$ in terms of the original CDF $F$:
+$$F_{a}(x) = F(x)^2$$
+$$F_c(x) = 1 - (1 - F(x))^2$$
+
+\subsection{Probability of accept}
+The probability an offer $\offer$ is accepted (in the acceptance interval $A$) is
+$$P(\offer \in A) = P(X_{(2)} < \offer) = F(\offer)^2$$
+
+\subsection{Probability of counteroffer}
+
+The an offer $\offer$ is countered when $\offer \in [X_{(1)}, X_{(2)}]$. The event's complement is a disjoint union $\offer < X_{(1)} \cup \offer > X_{(2)}$. 
+
+\begin{align*}
+    P(\offer \in [X_{(1)}, X_{(2)}]) &= 1 - P(\offer \not\in [X_{(1)}, X_{(2)}])\\
+    &= 1 - P(\offer < X_{(1)}) + P(\offer > X_{(2)}) \\
+    &= 1 - \left[(1 - F(\offer))^2 + F(\offer)^2\right] \\
+    &= 1 - (1 - 2F(\offer) + F(\offer)^2 + F(\offer)^2)\\
+    &= 2(F(\offer) - F(\offer)^2)
+\end{align*}
+
+\subsection{Probability of Rejection}
+
+An offer is rejected when $\offer < X_{(1)}$:
+$$P(\offer < X_{(1)}) = 1 - F_{X_{(1)}}(\offer) = (1 - F(\offer))^2$$
+
+\section{Value of Table}
+
+Let $V(i,j) = $ value of table $(i,j)$ to player $i$. Simplifying $\left\lfloor \frac{N}{2} \right\rfloor,\left\lfloor \frac{N-1}{2} \right\rfloor $, to $N/2$, we have:
+
+$$E(V(i,j)) \approx \frac{1}{2}\Bigg[N\left(\frac{1}{2}-\offer_i + \offer_j\right)P(\offer_i \in A_j)P(\offer_j \in A_i)$$
+$$ + (1 + N\delta_i - (1 + N\delta_i)\offer_i)P(\offer_i \in A_j)P(\offer_j \in C_i)$$
+$$+ (N\delta_i \offer_j - \offer_i)P(\offer_i \in C_j)P(\offer_j \in A_i)$$
+$$ + (1 - \offer_i)P(\offer_i \in R_j)P(\offer_j \in A_i)$$
+$$ + \offer_jP(\offer_i \in R_j)P(\offer_j \in A_i)\Bigg]$$
+
+\section{Optimizing}
+Plugging in the CDFs for the probabilities of player $j$'s responses we get
+
+$$E(V(i,j)) \approx \frac{1}{2}\Bigg[N\left(\frac{1}{2}-\offer_i + \offer_j\right)
+    F(\offer_i)^2P(\offer_j \in A_i)$$
+$$ + (1 + N\delta_i - (1 + N\delta_i)\offer_i) F(\offer_i)^2 P(\offer_j \in C_i)$$
+$$+ (N\delta_i \offer_j - \offer_i) \left[2(F(\offer_i) - F(\offer_i)^2)\right] P(\offer_j \in A_i)$$
+$$ + (1 - \offer_i)F(\offer_i)^2P(\offer_j \in A_i)$$
+$$ + \offer_j (1 - F(\offer_i))^2 P(\offer_j \in A_i)\Bigg]$$
+
+Setting first order conditions wrt $\offer_i$ yields:
+$$0 = 2NP(\offer_j \in A_i)\left( [2 - 2\offer_i + 2\offer_j]F(\offer_i)f(\offer_i) - F(\offer_i)^2 \right)$$
+$$ + P(\offer_j \in C_i)(-(1 + N\delta_i)F(\offer_i)^2 + 2(1 + N\delta_i - \offer_i - N\delta_i\offer_i)F(\offer_i)f(\offer_i))$$
+$$ + P(\offer_j \in A_i)\left[(F(\offer_i)^2 - 2F(\offer_i)) + 2(N\delta_i\offer_j - \offer_i)(f(\offer_i) - 2F(\offer_i)f(\offer_i))\right]$$  
+$$ + P(\offer_j \in A_i)\left[2(1 - \offer_i)F(\offer_i)f(\offer_i) - F(\offer_i)^2\right]$$
+$$ + -2\offer_jP(\offer_j \in A_i)(1 - F(\offer_i))f(\offer_i)$$
+
+If $F$ is the cdf of a uniform distribution, then $F(x) = x$ and $f(x) = 1$, in which case:
+
+$$0 = 2NP(\offer_j \in A_i)\left( [2 - 2\offer_i + 2\offer_j]\offer_i - \offer_i^2 \right)$$
+$$ + P(\offer_j \in C_i)(-(1 + N\delta_i)\offer_i^2 + 2(1 + N\delta_i - \offer_i - N\delta_i\offer_i)\offer_i)$$
+$$ + P(\offer_j \in A_i)\left[(\offer_i^2 - 2\offer_i) + 2(N\delta_i\offer_j - \offer_i)(1 - 2\offer_i)\right]$$  
+$$ + P(\offer_j \in A_i)\left[2(1 - \offer_i)\offer_i - \offer_i^2\right]$$
+$$ + -2\offer_jP(\offer_j \in A_i)(1 - \offer_i)$$
+
+Rewriting:
+$$ = 2NP(\offer_j \in A_i)(2\offer_i - 3\offer_i^2 + 2\offer_j\offer_i)$$
+$$ +P(\offer_j \in C_i) (2 + N\delta_i)\offer_i - P(\offer_j \in C_i)(2 + 2N\delta_i)\offer_i^2$$
+$$+ P(\offer_j \in A_i)\left[2N\delta_i\offer_j - 4\offer_i + (5 - 4N\delta_i)\offer_i^2\right]$$
+$$+ P(\offer_j \in A_i)(2\offer_i - 3\offer_i^2)$$
+$$+ 2\offer_jP(\offer_j \in A_i)\offer_i - 2\offer_jP(\offer_j \in A_i)$$
+
+Let $C_1 = P(\offer_j \in A_i), C_2 = P(\offer_j \in C_i)$. Then we can distribute and rewrite:
+
+$$0 = 4NC_1 - 6NC_1\offer_i^2 + 4C_1\offer_j\offer_i$$
+$$ + C_2(2 + N\delta_i)\offer_i - C_2(2 + 2N\delta_i)\offer_i^2$$
+$$ + 2N\delta_i C_1 \offer_j - 4C_1\offer_i + C_1(5-4N\delta_i)\offer_i^2$$
+$$ + 2C_1\offer_i - 3C_1\offer_i^2$$
+$$ + 2\offer_j C_1 \offer_i - 2\offer_j C_1$$
+\end{document}
